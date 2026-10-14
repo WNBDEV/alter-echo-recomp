@@ -1,0 +1,513 @@
+[
+  {
+    "start": "0x0005612E",
+    "observed": true,
+    "note": "PsCreateSystemThreadEx StartContext1 observed at runtime; decodes as a function body."
+  },
+  {
+    "start": "0x001AD7BD",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime; decodes as a function body."
+  },
+  {
+    "start": "0x001AEBD3",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime; decodes as a function body."
+  },
+  {
+    "start": "0x001AE2B7",
+    "note": "XPP code gap right after a ret N; no detected function covers it (found statically, not yet reached)"
+  },
+  {
+    "start": "0x001AE5D5",
+    "note": "XPP code gap right after a ret N; no detected function covers it (found statically, not yet reached)"
+  },
+  {
+    "start": "0x001B1371",
+    "note": "XPP code gap right after a ret N; no detected function covers it (found statically, not yet reached)"
+  },
+  {
+    "start": "0x00018B00",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00019600",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00020340",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00023EF0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00023FA0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00024EB0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00025F20",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00028D10",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x0002FC50",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00037B30",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00039690",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000396D0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00039700",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00039730",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00039AD0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x0003C410",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x0003CA70",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x0004D4B0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x0004DC50",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00051CB0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000755E0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000789C0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x0007BF10",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x0007BF60",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x0008F180",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000AE3E0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000C04B0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000C83A0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000D6C70",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000D8960",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000DEE10",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000DEE70",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000E4990",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000E7450",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000E7770",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000EBA00",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000EDB00",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000EDB50",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000F9AE0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000FCA40",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000FCA90",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000FCAF0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000FCBF0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00102F30",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x001047D0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00104820",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00115F20",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x0011E4B0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x0011E690",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x0011E6C0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x0011E6E0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00141770",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00141EB0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00141FB0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00142000",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00145040",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00145090",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x001451D0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00145520",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00145570",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x001455C0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00145660",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00145720",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00145870",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00145910",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x001459A0",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00145A30",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00145A90",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00149C90",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00161BDE",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x00168100",
+    "note": "direct call/jmp target that no detected function covered (was an unresolved stub); starts after ret/jmp/padding"
+  },
+  {
+    "start": "0x000190B0",
+    "note": "game state-machine handler (tables at 0x1CA380/0x1CA420/0x1CA4C0) not detected as a function"
+  },
+  {
+    "start": "0x0001D230",
+    "note": "game state-machine handler (tables at 0x1CA380/0x1CA420/0x1CA4C0) not detected as a function"
+  },
+  {
+    "start": "0x0001FBA0",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00022E40",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x000255C0",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x0002CF90",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00046F10",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x0004F780",
+    "note": "game state-machine handler (tables at 0x1CA380/0x1CA420/0x1CA4C0) not detected as a function"
+  },
+  {
+    "start": "0x0005CBB0",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00062390",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00062A70",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00062B70",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00062D80",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00063010",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00063640",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00064C00",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00065150",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x0006B2B0",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x0006BAC0",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00083940",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00083A70",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00083B30",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00083BE0",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00083CE0",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00090F00",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00092660",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00093BC0",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00094530",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x000B4540",
+    "note": "game state-machine handler (tables at 0x1CA380/0x1CA420/0x1CA4C0) not detected as a function"
+  },
+  {
+    "start": "0x000B4880",
+    "note": "game state-machine handler (tables at 0x1CA380/0x1CA420/0x1CA4C0) not detected as a function"
+  },
+  {
+    "start": "0x000BC180",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x000BC390",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x000BC490",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x000BD080",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x000E2D10",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x0010AA00",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x0011CB00",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00127860",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00146600",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00147610",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x0015E980",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x0015F300",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00166650",
+    "note": "ret + padding to a 16-byte boundary inside a detected function: two functions merged (ret verified as an instruction boundary)"
+  },
+  {
+    "start": "0x00167A60",
+    "note": "D3D section code gap no detected function covered; starts after ret/padding and decodes cleanly"
+  },
+  {
+    "start": "0x00167DF0",
+    "note": "D3D section code gap no detected function covered; starts after ret/padding and decodes cleanly"
+  },
+  {
+    "start": "0x00167F30",
+    "note": "D3D section code gap no detected function covered; starts after ret/padding and decodes cleanly"
+  },
+  {
+    "start": "0x00168010",
+    "note": "D3D section code gap no detected function covered; starts after ret/padding and decodes cleanly"
+  },
+  {
+    "start": "0x00168180",
+    "note": "D3D section code gap no detected function covered; starts after ret/padding and decodes cleanly"
+  },
+  {
+    "start": "0x001690E0",
+    "note": "D3D section code gap no detected function covered; starts after ret/padding and decodes cleanly"
+  },
+  {
+    "start": "0x0016F530",
+    "note": "D3D's NV2A interrupt service routine (KeConnectInterrupt vector 3); only reached through the interrupt object"
+  }
+]
