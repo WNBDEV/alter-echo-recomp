@@ -107,6 +107,8 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 25 | Gameplay ~6.3 fps. `RECOMP_WAIT_PROFILE=1` (new) showed the main thread 93% in `BlockOnTime`'s wait (GPU-bound); `RECOMP_GPU_PROFILE=1` (new) showed the pool 85% busy, so the cost is per pixel | Combiner mappings decoded once per input instead of per channel (bit-identical over 2M random programs); power-of-two fast paths for swizzled addressing and wrap (identical over every coordinate checked); raster pool default ncpu-1 instead of ncpu-4. 8.1 fps on the same scene | `../xboxrecomp/src/kernel/nv2a_combiner.c`, `nv2a_pb_exec.c`, `src/d3d/d3d8_swizzle.h`, `kernel_bridge.c` |
 | 26 | `[ICALL] Failed to resolve VA 0x0006B080`, ~45/s in gameplay | It starts after `ret 4`, a 4-entry jump table and nop padding; the detector read the table as code and folded it into `sub_0006AF00`. Seeded, plus 21 more found by scanning every function's range for an aligned prologue behind ret/jump table + padding. No unresolved indirect calls in gameplay after | `seed_functions.json` |
 | 27 | No sound at all: `RECOMP_AUDIO_STATS=1` (new) showed up to 9 voices playing and signal in the mixbins, but peak 0 at XAudio2 | The output stage cleared the buffer holding the DSP mixdown and filled it from the test tone and software mixer only, and submitted 4x real time (3 of 4 buffers dropped). It now plays the mixdown with those mixed on top, in whole buffers. `RECOMP_AUDIO_DUMP=<file>` (new) captures it: music and speech by spectrum, real-time rate. `logs/audio.wav` is 90 s from the intro | `../xboxrecomp/src/apu/apu_core.c`, `apu_xaudio2.c` |
+| 28 | A white box over most of the view from the first tutorial popup ("Press A to jump") on | `RECOMP_FRAME_TRACE_METHODS` on that frame: the popup stamps the stencil buffer with a safe-area quad drawn with stencil func NEVER / fail REPLACE, which writes no colour on hardware. The rasteriser had no stencil at all. Added an 8-bit stencil buffer per zeta surface with the full test and ops. Also a per-draw vertex cache (verified against fresh runs) | `../xboxrecomp/src/kernel/nv2a_pb_exec.c` |
+| 29 | Flat white triangles on brightly lit walls | Vertex colour outputs were not saturated to [0, 1] as the NV2A (and xemu) does; a diffuse of 2.3 scaled every texel. Clamped. What white remains is holes where nothing draws in some frames (`RECOMP_DEBUG_HOLES=1` paints them magenta), not shading | `nv2a_pb_exec.c` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 
@@ -247,8 +249,10 @@ nothing; a press once the level runs opens the pause menu:
   D3D11 backend in the toolkit (`src/nv2a/nv2a_pgraph_d3d11.c`) only
   translates another title's 2D menu, so a hardware path is a project of its
   own; profiling and tightening the per-pixel path is the near-term option.
-- Stray white triangles in some frames (gameplay, and the menu's), and a
-  missing corner triangle in the loading screen's post-effect pass.
+- Holes: a few wedge-shaped gaps in one cutscene shot and a sliver on the
+  first stairs, where no draw reaches the pixel in some frames (fix 29 has
+  the probes). Not clipping precision (a guard band was tried and changed
+  nothing). Occlusion-query results (zpass reports) are the next suspect.
 - Play further: movement and combat with a real controller
   (`RECOMP_USB=1` takes XInput input), the first checkpoints.
 - Audio plays now (fix 27), but through the GP/EP stub: every mixbin summed,
