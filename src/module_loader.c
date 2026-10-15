@@ -151,3 +151,46 @@ void ae_guest_regs(uint32_t *ebx, uint32_t *esi, uint32_t *edi)
 {
     *ebx = g_ebx; *esi = g_esi; *edi = g_edi;
 }
+
+/* An import thunk slot (src/module_thunks.c): 5 bytes at the start of a
+ * module's .text that its DLLFixupNames patched with `jmp <engine function>`.
+ * The caller has pushed its return address and arguments exactly as for the
+ * engine function, so following the jmp is just calling the target: it
+ * consumes them. A slot that was never patched still holds int3 -- on the
+ * console that is a breakpoint; here it pops the return address like an
+ * unresolved stub and says so. */
+typedef void (*ae_func_t)(void);
+extern ae_func_t recomp_lookup(uint32_t xbox_va);
+extern ae_func_t recomp_lookup_manual(uint32_t xbox_va);
+
+void ae_dyn_thunk(uint32_t slot)
+{
+    const uint8_t *p = GPTR(slot);
+    if (p[0] == 0xE9) {
+        uint32_t target = slot + 5 + (uint32_t)*(const int32_t *)(p + 1);
+        ae_func_t fn = recomp_lookup_manual(target);
+        if (!fn)
+            fn = recomp_lookup(target);
+        if (fn) {
+            fn();
+            return;
+        }
+        {
+            static unsigned n;
+            if (n++ < 20) {
+                fprintf(stderr, "[MODULE] thunk 0x%08X jumps to 0x%08X, which "
+                        "is not translated\n", slot, target);
+                fflush(stderr);
+            }
+        }
+    } else {
+        static unsigned n;
+        if (n++ < 20) {
+            fprintf(stderr, "[MODULE] thunk 0x%08X called but never patched "
+                    "(%02X)\n", slot, p[0]);
+            fflush(stderr);
+        }
+    }
+    g_esp += 4;
+    g_eax = 0;
+}

@@ -25,6 +25,9 @@ Outputs: build-modules/default_modules.xbe  the XBE plus one executable
              function seeds for tools.disasm --seed-functions
          src/module_layout.c        the table the runtime hook uses: base,
              packed length and relocation sites per module
+         src/module_thunks.c, build-modules/thunk_functions.json
+                                    the import thunk slots module code calls,
+             as hand-written functions (see thunk_slots)
 
 Usage: python3 tools/build_modules.py [xbe]   (default: game/default.xbe)
 """
@@ -110,6 +113,67 @@ def exports(d, pe):
     return out
 
 
+def thunk_slots(d, pe, B):
+    """Import thunk slots that the module's code calls or jumps to.
+
+    Each module's .text opens with a run of int3: 5-byte slots that its
+    DLLFixupNames export overwrites at load time with `jmp <engine function>`
+    (E9 rel32), one per engine import it resolved by name. Translated ahead of
+    time they are int3, so a call into one did nothing and left the guest
+    stack 4 bytes short. They become hand-written functions instead
+    (src/module_thunks.c -> ae_dyn_thunk), which read the patched jmp at run
+    time and dispatch to its target."""
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    text = pe["secs"][0]
+    code = d[text["rptr"]:text["rptr"] + text["vsize"]]
+    run = 0
+    while run < len(code) and code[run] == 0xCC:
+        run += 1
+    lo, hi = B + text["va"], B + text["va"] + run - run % 5
+    found = set()
+    md = Cs(CS_ARCH_X86, CS_MODE_32)
+    md.skipdata = True
+    for ins in md.disasm(code, B + text["va"]):
+        if ins.mnemonic in ("call", "jmp") and ins.op_str.startswith("0x"):
+            t = int(ins.op_str, 16)
+            if lo <= t < hi and (t - lo) % 5 == 0:
+                found.add(t)
+    return sorted(found)
+
+
+def code_pointers(d, pe, sites, B, thunk_hi):
+    """Function entries that are only reached through pointers.
+
+    The relocation table lists every absolute address in the image, so a
+    relocated dword that points into .text is a code address. In .rdata and
+    .data those are vtable slots and callback tables -- functions nothing
+    calls directly, which the disassembler cannot find and which otherwise
+    fail at run time ("[ICALL] Failed to resolve"), leaking the stack bytes
+    their callee would have popped. In .text, `push imm32` and
+    `mov reg, imm32` immediates are callbacks being passed or stored; the other
+    relocated dwords there are mostly switch tables, whose entries are labels
+    inside a function, and are left alone."""
+    base = pe["image_base"]
+    text = pe["secs"][0]
+    t_lo, t_hi = base + text["va"], base + text["va"] + text["vsize"]
+    out = set()
+    for site in sites:
+        off = rva_to_off(pe, site)
+        v = struct.unpack_from("<I", d, off)[0]
+        if not (t_lo <= v < t_hi):
+            continue
+        target = B + (v - base)
+        if target < thunk_hi:
+            continue
+        in_text = text["va"] <= site < text["va"] + text["vsize"]
+        if in_text:
+            op = d[off - 1]
+            if not (op == 0x68 or 0xB8 <= op <= 0xBF):
+                continue
+        out.add(target)
+    return out
+
+
 def build_xbe(xbe, texts, out_path):
     """The XBE plus one executable section per module's relocated .text.
 
@@ -138,15 +202,34 @@ def build_xbe(xbe, texts, out_path):
         d.extend(name.encode() + b"\0")
         headers += struct.pack("<IIIIIIIII", XBE_SECTION_PRELOAD_EXEC, va, size,
                                off, size, base + noff, 0, 0, 0) + b"\0" * 20
+    # The XBE repeats some section names (Alter Echo has four BINKYUY2), and
+    # tools.disasm --extra-sections finds sections by name, so all but one of
+    # a repeated name went undisassembled -- their functions became
+    # unresolved calls the first time a Bink video played. Give repeats their
+    # own names in this copy: NAME_2, NAME_3...
+    old = bytearray(old)
+    seen, renamed = {}, []
+    for i in range(nsec):
+        name_va = struct.unpack_from("<I", old, 56 * i + 20)[0]
+        o = name_va - base
+        name = bytes(d[o:d.index(b"\0", o)]).decode("latin1")
+        seen[name] = seen.get(name, 0) + 1
+        if seen[name] > 1:
+            new_name = f"{name}_{seen[name]}"
+            noff = len(d)
+            d.extend(new_name.encode() + b"\0")
+            struct.pack_into("<I", old, 56 * i + 20, base + noff)
+            renamed.append(new_name)
     pad(4)
     arr_off = len(d)
-    d.extend(old + headers)
+    d.extend(bytes(old) + headers)
     # The parser reads section headers and names as file offsets from the
     # base address, so both can live past the 4 KB header region.
     struct.pack_into("<I", d, 0x11C, nsec + len(texts))
     struct.pack_into("<I", d, 0x120, base + arr_off)
     with open(out_path, "wb") as f:
         f.write(d)
+    return renamed
 
 
 def main():
@@ -156,7 +239,7 @@ def main():
     manifest = json.load(open(os.path.join(mdir, "manifest.json")))
 
     cursor = MODULE_REGION
-    layout, seeds, c_mods = [], [], []
+    layout, seeds, c_mods, thunks = [], [], [], []
     total_sites = 0
     for m in sorted(manifest, key=lambda m: m["name"]):
         d = open(os.path.join(mdir, m["file"]), "rb").read()
@@ -170,6 +253,14 @@ def main():
         cursor += (max(pe["image_size"], rawptr0 + packed) + SLOT_ALIGN - 1) & ~(SLOT_ALIGN - 1)
         sites = relocations(d, pe)
         ex = exports(d, pe)
+        slots = thunk_slots(d, pe, B)
+        thunks.extend(slots)
+        text0 = pe["secs"][0]
+        run = 0
+        while d[text0["rptr"] + run] == 0xCC:
+            run += 1
+        ptrs = code_pointers(d, pe, sites, B, B + text0["va"] + run)
+        ptr_seeds = sorted(ptrs - {B + rva for rva in ex.values()} - {B + pe["entry"]})
         layout.append(dict(name=m["name"], file=m["file"], base=B,
                            rawptr0=rawptr0, packed=packed,
                            image_size=pe["image_size"],
@@ -180,6 +271,9 @@ def main():
         for name, rva in sorted(set(ex.items()) | {("entry", pe["entry"])}):
             seeds.append({"start": f"0x{B + rva:08X}", "observed": True,
                           "note": f"{m['name']} {name}"})
+        for a in ptr_seeds:
+            seeds.append({"start": f"0x{a:08X}", "observed": True,
+                          "note": f"{m['name']} code pointer (relocated)"})
         c_mods.append((m["name"], B, rawptr0, packed, [s - rawptr0 for s in sites],
                        d, pe, sites, text))
         total_sites += len(sites)
@@ -198,9 +292,9 @@ def main():
 
     os.makedirs(os.path.join(root, "build-modules"), exist_ok=True)
     xbe_out = os.path.join(root, "build-modules", "default_modules.xbe")
-    build_xbe(open(xbe_path, "rb").read(), texts, xbe_out)
+    renamed = build_xbe(open(xbe_path, "rb").read(), texts, xbe_out)
     with open(os.path.join(root, "build-modules", "extra_sections.txt"), "w") as f:
-        f.write(",".join(n for n, _, _ in texts))
+        f.write(",".join(renamed + [n for n, _, _ in texts]))
     json.dump(layout, open(os.path.join(mdir, "layout.json"), "w"), indent=1)
     json.dump(seeds, open(os.path.join(mdir, "module_seeds.json"), "w"), indent=1)
 
@@ -229,9 +323,27 @@ def main():
     with open(os.path.join(root, "src", "module_layout.c"), "w") as f:
         f.write("\n".join(c))
 
+    t = ["/* Generated by tools/build_modules.py -- do not edit.",
+         " *",
+         " * Import thunk slots in the modules' .text, patched at run time by",
+         " * each module's DLLFixupNames with `jmp <engine function>`. Each is",
+         " * hand-written (tools.recomp --manual-functions build-modules/",
+         " * thunk_functions.json) so a call into one follows the jmp that is",
+         " * actually there. See ae_dyn_thunk in module_loader.c. */",
+         "#include <stdint.h>",
+         "void ae_dyn_thunk(uint32_t slot);", ""]
+    for a in thunks:
+        t.append(f"void sub_{a:08X}(void) {{ ae_dyn_thunk(0x{a:08X}u); }}")
+    t.append("")
+    with open(os.path.join(root, "src", "module_thunks.c"), "w") as f:
+        f.write("\n".join(t))
+    json.dump({f"0x{a:08X}": f"sub_{a:08X}" for a in thunks},
+              open(os.path.join(root, "build-modules", "thunk_functions.json"), "w"),
+              indent=1)
+
     print(f"{len(c_mods)} modules at 0x{MODULE_REGION:08X}-0x{cursor:08X} "
           f"({span / 1e6:.1f} MB), {total_sites} relocation sites, "
-          f"{len(seeds)} seeds -> {xbe_out}")
+          f"{len(seeds)} seeds, {len(thunks)} import thunk slots -> {xbe_out}")
 
 
 if __name__ == "__main__":

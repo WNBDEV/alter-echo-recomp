@@ -56,6 +56,7 @@ set(GAME_SOURCES
     # layout table (tools/build_modules.py writes module_layout.c).
     src/module_loader.c
     src/module_layout.c
+    src/module_thunks.c
     # Add game-specific sources here, e.g.:
     # src/asset_loader.c
     # src/custom_renderer.c

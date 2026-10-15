@@ -889,5 +889,115 @@
   {
     "start": "0x00169250",
     "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x0005F580",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime; decodes as a function body."
+  },
+  {
+    "start": "0x0019B900",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime; decodes as a function body."
+  },
+  {
+    "start": "0x001A0780",
+    "observed": true,
+    "note": "PsCreateSystemThreadEx StartContext1 observed at runtime; decodes as a function body."
+  },
+  {
+    "start": "0x001A18A0",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime; decodes as a function body."
+  },
+  {
+    "start": "0x00197100",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x001976A0",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x00198E47",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x00199F20",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x0019A460",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x0019A5A0",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x0019B160",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x0019B240",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x001A15C0",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x001A44CD",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x001A8DE0",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x001A9B10",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x001AA040",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x001AA0E0",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x001AA2E0",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x001AB325",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x001AC8D6",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
+  },
+  {
+    "start": "0x001ACBC0",
+    "observed": true,
+    "note": "Bink section code no detected function covered (section start or after ret/padding)"
   }
 ]

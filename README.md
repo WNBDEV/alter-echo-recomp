@@ -174,16 +174,36 @@ How it works:
   reject as wild pointers.
 - Run with `RECOMP_EXT_VMA=1` in addition to the usual switches.
 
-Result so far: 11 modules load and run from their bases (Nevin, NevinGlaive,
-Squad, ShieldMaster...). The game gets past the copyright screen into state
-10 and loads `level_main_menu.dll`.
+Further fixes found along the way:
+- **Import thunks.** Each module's `.text` opens with `int3` slots that its
+  `DLLFixupNames` patches at load time with `jmp <engine function>`. Ahead of
+  time they look like padding, so a call into one did nothing and unbalanced
+  the stack. That was the 8-byte drift, found with an ABI-check build
+  (`-DRECOMP_ABI_CHECK`). `build_modules.py` now finds the 8,518 slots the
+  modules call and generates `src/module_thunks.c`. There each slot is
+  hand-written as `ae_dyn_thunk(slot)`, which follows the patched `jmp` at
+  run time (via `--manual-functions build-modules/thunk_functions.json`).
+- **Code pointers.** Functions in the modules that are only reached through
+  vtables or callbacks are found from the relocation table: any relocated
+  dword in `.rdata`/`.data` (or a `push`/`mov` immediate in `.text`) that
+  points into `.text`. That gives 650 seeds.
+- **Audio.** With the modules running, the game plays 3D sound, so
+  DirectSound must initialise (`RECOMP_AC97_READY=1`). Its DSP effects
+  download then waits for the GP DSP, which is only a stub, to clear a
+  command word. `RECOMP_DSP_ACK=0x808A8810` (the toolkit's probe) clears it.
+  This is a stopgap until the DSP is emulated.
+- **Repeated section names.** The XBE has four `BINKYUY2` sections, and
+  `--extra-sections` finds sections by name, so three were never
+  disassembled. The augmented XBE renames repeats (`BINKYUY2_2`...).
 
-Current problem: right after that, a callback run by the event-queue pump
-(`sub_0011CD10`, queue `0x52A6F0`) returns with the guest stack 8 bytes too
-low. The callback is state 9's `0x16CE0`, which calls `sub_00016A40`, the
-level load. The pump's `ebx` then comes back as `0x16CEB`, it pumps a
-garbage "queue", and calls NULL callbacks millions of times. Each skipped
-call leaks stack, so `esp` walks up through memory and corrupts game state.
-Being found with an ABI-check build (`build-abi`, `-DRECOMP_ABI_CHECK`),
-which logs every direct call whose callee leaves `esp` or `ebx`/`esi`/`edi`
-wrong.
+**Milestone (15 Oct 2026 ~05:15): the main menu renders** at ~35-45 fps:
+Start Game / Load Game / Options / Extras / Credits (`logs/main-menu.png`).
+The background is flat, since Bink video was failing (being fixed now).
+
+Current run command (as your own user):
+
+```bash
+RECOMP_EXT_VMA=1 RECOMP_AC97_READY=1 RECOMP_DSP_ACK=0x808A8810 \
+RECOMP_USB=1 RECOMP_IRQL_LOCK=1 RECOMP_PB_EXEC=1 RECOMP_TITLE_KEVENTS=1 RECOMP_VBLANK=1 \
+RECOMP_FB_WINDOW=1 ./run.sh
+```

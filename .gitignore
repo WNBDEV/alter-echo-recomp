@@ -61,3 +61,4 @@ modules/
 build-modules/
 src/module_layout.c
 build-abi/
+src/module_thunks.c

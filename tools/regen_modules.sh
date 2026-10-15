@@ -10,7 +10,9 @@
 #   2. the usual pipeline on that XBE, with the module sections as extra code
 #      sections and the engine + module seeds merged
 #   3. tools.recomp with --exclude-manual src/module_loader.c, so the loader
-#      it wraps (sub_0011D860) is emitted as sub_0011D860_gen
+#      it wraps (sub_0011D860) is emitted as sub_0011D860_gen, and
+#      --manual-functions for the modules' import thunk slots, which
+#      src/module_thunks.c defines
 set -euo pipefail
 
 P="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,7 +22,7 @@ X="$P/build-modules/default_modules.xbe"
 L="$P/logs"
 mkdir -p "$L"
 
-python3 "$P/tools/build_modules.py" "$P/game/default.xbe"
+"$PY" "$P/tools/build_modules.py" "$P/game/default.xbe"   # needs capstone
 
 "$PY" - "$P" <<'EOF'
 import json, sys
@@ -48,7 +50,8 @@ cd "$T"
 "$PY" tools/ghidra_naming/merge_names.py --apply > "$L/step4.6_merge.log" 2>&1
 rm -f "$P"/src/recomp/gen/recomp_*.c
 "$PY" -m tools.recomp "$X" --all --split 250 --gen-dir "$P/src/recomp/gen" \
-    --exclude-manual "$P/src/module_loader.c" > "$L/step5_recomp.log" 2>&1
+    --exclude-manual "$P/src/module_loader.c" \
+    --manual-functions "$P/build-modules/thunk_functions.json" > "$L/step5_recomp.log" 2>&1
 
 grep -E 'Total functions' "$L/step3_disasm.log" || true
 grep -E 'functions \(|unresolved call' "$L/step5_recomp.log" || true
