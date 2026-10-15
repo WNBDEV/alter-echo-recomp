@@ -151,3 +151,41 @@ RECOMP_FB_WINDOW=1 RECOMP_FB_DUMP=logs/frame.bmp RECOMP_FB_WINDOW_DUMP_EVERY=120
 - **Most of the 87 odd instructions are probably data decoded as code.** Opcodes like `aas`, `arpl`, `salc` and `bound` are almost never emitted by a 2003 compiler, and the spot checks I did sit at addresses the main disassembly doesn't line up with. They'll only matter if execution actually reaches them.
 - **One is definitely real:** `sub_00011160` runs `pushfd`/`popfd` + `cpuid` to check for MMX support (`test edx, 0x800000`). If the first crash lands there, the fix is a manual override in `src/recomp_manual.c` that reports MMX as present.
 - **The `in`/`out` cluster in `sub_0003EBE0`** might be real hardware port access. Worth looking at if a crash or hang points there.
+
+## Stage 2: runtime-loaded modules (in progress, 15 Oct 2026 ~01:55)
+
+Done:
+- `tools/extract_modules.py`: pulls every PE module out of the disc
+  archives and keeps one copy per distinct image. Writes `modules/` and
+  `manifest.json`: 314 modules (209 object, 57 level, 48 trigger scripts).
+- `tools/build_modules.py`: gives each module a fixed effective base from
+  `0x74000000` (23.7 MB in total). It writes
+  `build-modules/default_modules.xbe` (the XBE plus one executable `MODULES`
+  section holding every module's `.text`, relocated to its base) and
+  `modules/module_seeds.json` (3,768 export and entry seeds). It also
+  generates `src/module_layout.c` (per-module base and 258,160 relocation
+  sites) and `modules/layout.json`.
+- Toolkit: the flat dispatch table now covers only the main code cluster,
+  and addresses far outside it go to the binary search
+  (`translator.py _flat_range`).
+
+Found: the game's loader is `sub_0011D860` (a thiscall: `ecx` = loader
+object, one stack argument = the stream, success returned in `al`). It
+copies sections back to back into `malloc`ed memory. `[obj+0x24]` is the
+image, holding RVA 0x1000 onward, and `[obj+0x28]` is the export directory.
+Every relocation site is at `image + rva - 0x1000`, with delta
+`image - 0x1000 - 0x10000000`.
+
+Next:
+1. `src/module_loader.c`: wrap `sub_0011D860` (call `sub_0011D860_gen`; on
+   success read the DLL name from the export directory and find it in
+   `g_ae_modules`). Commit guest memory at `base + 0x1000` (needs
+   `RECOMP_EXT_VMA=1`), copy `packed` bytes there, and add
+   `base - (image - 0x1000)` at every site. Then set `[obj+0x24]` and
+   `[obj+0x28]` to the new locations, leaving `[obj+0x34]` (the heap block
+   the game frees) alone.
+2. Run the pipeline on `build-modules/default_modules.xbe` with
+   `--extra-sections ...,MODULES` and seeds merged from
+   `seed_functions.json` and `modules/module_seeds.json`, plus
+   `--exclude-manual src/recomp_manual.c` for the wrapper. Add
+   `module_layout.c` and `module_loader.c` to CMake, then rebuild.

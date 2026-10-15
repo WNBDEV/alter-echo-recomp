@@ -55,3 +55,8 @@ build-win/
 logs/
 *.log
 backtrace.txt
+
+# Stage 2 outputs (regenerate: tools/extract_modules.py, tools/build_modules.py)
+modules/
+build-modules/
+src/module_layout.c
