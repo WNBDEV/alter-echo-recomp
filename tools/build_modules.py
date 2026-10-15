@@ -15,9 +15,11 @@ B + rawptr0 and re-applies the relocations for B.
 Inputs : modules/manifest.json + modules/*.dll (from extract_modules.py),
          the original default.xbe
 Outputs: build-modules/default_modules.xbe  the XBE plus one executable
-             section, MODULES, holding every module's relocated .text at its
-             base (everything else int3). Only the translation pipeline reads
-             it; the game still runs the original XBE.
+             section per module (M0001...) holding its .text relocated to its
+             base. Only the translation pipeline reads it; the game still
+             runs the original XBE.
+         build-modules/extra_sections.txt  those section names, for
+             tools.disasm --extra-sections
          modules/layout.json        name -> base, sizes, export addresses
          modules/module_seeds.json  every export and entry point, as trusted
              function seeds for tools.disasm --seed-functions
@@ -33,7 +35,6 @@ import sys
 
 MODULE_REGION = 0x74000000      # above the RAM mirrors; needs RECOMP_EXT_VMA
 SLOT_ALIGN = 0x10000
-SECTION_NAME = b"MODULES\0"
 XBE_SECTION_PRELOAD_EXEC = 0x06  # preload | executable
 
 
@@ -109,32 +110,40 @@ def exports(d, pe):
     return out
 
 
-def build_xbe(xbe, blob, out_path):
+def build_xbe(xbe, texts, out_path):
+    """The XBE plus one executable section per module's relocated .text.
+
+    `texts` is [(name, va, bytes)]. One section each rather than one region
+    for all: the region is mostly gaps between slots, and the disassembler
+    sweeps every byte of a code section."""
     d = bytearray(xbe)
     base = struct.unpack_from("<I", d, 0x104)[0]
     nsec = struct.unpack_from("<I", d, 0x11C)[0]
     hdr_va = struct.unpack_from("<I", d, 0x120)[0]
     old = bytes(d[hdr_va - base:hdr_va - base + 56 * nsec])
 
-    def align(n):
-        return (n + 0xFFF) & ~0xFFF
+    def pad(n):
+        d.extend(b"\0" * (-len(d) % n))
 
-    d += b"\0" * (align(len(d)) - len(d))
-    blob_off = len(d)
-    d += blob
-    d += b"\0" * (align(len(d)) - len(d))
-    name_off = len(d)
-    d += SECTION_NAME
-    while len(d) % 4:
-        d += b"\0"
+    pad(0x1000)
+    headers = bytearray()
+    names_at = []
+    for name, va, img in texts:
+        off = len(d)
+        d.extend(img)
+        pad(16)
+        names_at.append((name, va, off, len(img)))
+    for name, va, off, size in names_at:
+        noff = len(d)
+        d.extend(name.encode() + b"\0")
+        headers += struct.pack("<IIIIIIIII", XBE_SECTION_PRELOAD_EXEC, va, size,
+                               off, size, base + noff, 0, 0, 0) + b"\0" * 20
+    pad(4)
     arr_off = len(d)
-    new = struct.pack("<IIIIIIIII", XBE_SECTION_PRELOAD_EXEC, MODULE_REGION,
-                      len(blob), blob_off, len(blob), base + name_off, 0, 0, 0)
-    new += b"\0" * 20
-    d += old + new
+    d.extend(old + headers)
     # The parser reads section headers and names as file offsets from the
     # base address, so both can live past the 4 KB header region.
-    struct.pack_into("<I", d, 0x11C, nsec + 1)
+    struct.pack_into("<I", d, 0x11C, nsec + len(texts))
     struct.pack_into("<I", d, 0x120, base + arr_off)
     with open(out_path, "wb") as f:
         f.write(d)
@@ -176,8 +185,8 @@ def main():
         total_sites += len(sites)
 
     span = cursor - MODULE_REGION
-    blob = bytearray(b"\xCC" * span)
-    for name, B, rawptr0, packed, offs, d, pe, sites, text in c_mods:
+    texts = []
+    for k, (name, B, rawptr0, packed, offs, d, pe, sites, text) in enumerate(c_mods):
         img = bytearray(d[text["rptr"]:text["rptr"] + text["vsize"]])
         delta = (B - pe["image_base"]) & 0xFFFFFFFF
         for s in sites:
@@ -185,12 +194,13 @@ def main():
                 o = s - text["va"]
                 v = struct.unpack_from("<I", img, o)[0]
                 struct.pack_into("<I", img, o, (v + delta) & 0xFFFFFFFF)
-        at = B + text["va"] - MODULE_REGION
-        blob[at:at + len(img)] = img
+        texts.append((f"M{k + 1:04d}", B + text["va"], bytes(img)))
 
     os.makedirs(os.path.join(root, "build-modules"), exist_ok=True)
     xbe_out = os.path.join(root, "build-modules", "default_modules.xbe")
-    build_xbe(open(xbe_path, "rb").read(), bytes(blob), xbe_out)
+    build_xbe(open(xbe_path, "rb").read(), texts, xbe_out)
+    with open(os.path.join(root, "build-modules", "extra_sections.txt"), "w") as f:
+        f.write(",".join(n for n, _, _ in texts))
     json.dump(layout, open(os.path.join(mdir, "layout.json"), "w"), indent=1)
     json.dump(seeds, open(os.path.join(mdir, "module_seeds.json"), "w"), indent=1)
 

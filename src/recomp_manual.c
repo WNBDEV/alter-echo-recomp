@@ -165,10 +165,20 @@ void recomp_icall_not_code_log(uint32_t va)
         if (n != 1)
             return;
     }
-    fprintf(stderr, "[ICALL] target 0x%08X is not code -- skipped %llu time(s) "
-                    "(null or wild function pointer, at call #%llu)\n",
-            va, (unsigned long long)hits[i],
-            (unsigned long long)g_icall_count);
+    {
+        /* The caller has pushed its return address: that names the call
+         * site, which the target (usually 0) does not. */
+        extern uint32_t ae_guest_return_address(void);
+        extern void ae_guest_regs(uint32_t *ebx, uint32_t *esi, uint32_t *edi);
+        uint32_t rb, rs, rd;
+        ae_guest_regs(&rb, &rs, &rd);
+        fprintf(stderr, "[ICALL] target 0x%08X is not code -- skipped %llu time(s) "
+                        "(null or wild function pointer, at call #%llu, "
+                        "returning to 0x%08X; ebx=%08X esi=%08X edi=%08X)\n",
+                va, (unsigned long long)hits[i],
+                (unsigned long long)g_icall_count, ae_guest_return_address(),
+                rb, rs, rd);
+    }
     fflush(stderr);
 }
 

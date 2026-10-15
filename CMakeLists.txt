@@ -52,6 +52,10 @@ file(GLOB RECOMP_GEN_SOURCES CONFIGURE_DEPENDS "src/recomp/gen/*.c")
 set(GAME_SOURCES
     src/main.c
     src/recomp_manual.c
+    # Runtime-loaded modules (stage 2): the loader hook and the generated
+    # layout table (tools/build_modules.py writes module_layout.c).
+    src/module_loader.c
+    src/module_layout.c
     # Add game-specific sources here, e.g.:
     # src/asset_loader.c
     # src/custom_renderer.c
