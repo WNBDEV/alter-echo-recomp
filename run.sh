@@ -41,6 +41,13 @@ for v in EXT_VMA AC97_READY USB KEYBOARD IRQL_LOCK PB_EXEC TITLE_KEVENTS \
 done
 export RECOMP_DSP_ACK="${RECOMP_DSP_ACK:-0x808A8810}"
 
+# Raster threads: the GPU is emulated on the CPU, and every thread given to it
+# is a core kept busy. Four is the measured sweet spot on a 4-core/8-thread
+# i7-4790K: 7.3 fps at ~3 cores of load, against 8.6 fps at ~5 with seven
+# threads, which drove the package to 99-100 C. More frames, more heat:
+# RECOMP_RASTER_THREADS=7 ./run.sh.
+export RECOMP_RASTER_THREADS="${RECOMP_RASTER_THREADS:-4}"
+
 export WINEPREFIX="$HOME/.local/share/wineprefixes/alter-echo-recomp"
 export WINEDEBUG="${WINEDEBUG:--all}"
 

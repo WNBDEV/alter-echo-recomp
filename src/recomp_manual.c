@@ -113,8 +113,27 @@ recomp_func_t recomp_lookup_manual(uint32_t xbox_va)
  */
 void recomp_icall_fail_log(uint32_t va)
 {
-    fprintf(stderr, "[ICALL] Failed to resolve VA 0x%08X (total calls: %llu)\n",
-            va, (unsigned long long)g_icall_count);
+    /* Rate-limited per address, like the not-code log below: the first three,
+     * then at powers of two. An untranslated function that a loop calls
+     * logged 360,000 of these in three minutes of play (a 153 MB log), and
+     * the writing itself slowed the game to a crawl. Which addresses fail is
+     * the information; how often is only a count. */
+    static struct { uint32_t va; unsigned long n; } seen[64];
+    unsigned long n = 0;
+    int i, slot = -1;
+
+    for (i = 0; i < 64; i++) {
+        if (seen[i].va == va) { slot = i; break; }
+        if (!seen[i].va && slot < 0) slot = i;
+    }
+    if (slot >= 0) {
+        seen[slot].va = va;
+        n = ++seen[slot].n;
+    }
+    if (n > 3 && (n & (n - 1)))
+        return;
+    fprintf(stderr, "[ICALL] Failed to resolve VA 0x%08X (total calls: %llu, "
+            "this one %lu times)\n", va, (unsigned long long)g_icall_count, n);
 
     /* Dump last 16 call targets from the ring buffer */
     fprintf(stderr, "  Recent ICALL targets:\n");

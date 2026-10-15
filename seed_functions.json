@@ -1088,5 +1088,211 @@
   {
     "start": "0x001AC470",
     "note": "16-byte-aligned start after ret + padding inside a detected function's range (merged by the detector); decodes to a ret. Found statically by the merged-function scan, not yet reached."
+  },
+  {
+    "start": "0x0003F400",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x000443E0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00066500",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x0009A2A0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x0009C8B0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x000ABDA0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x000DC580",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x000E11A0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00108930",
+    "observed": true,
+    "note": "Indirect-call target observed in gameplay after the first scripted event ([ICALL] Failed to resolve, the game stalled). Behind a jump table + padding in a gap no detected function covers."
+  },
+  {
+    "start": "0x0010A040",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x0013A2E0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x001420B0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00157950",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00157980",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x001579F0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166890",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x001668B0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x001668E0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x001668F0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166900",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166910",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166920",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166930",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166940",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166950",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166960",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166980",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166990",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x001669A0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x001669B0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x001669C0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x001669D0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x001669E0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x001669F0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166A00",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166A10",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166A20",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166A30",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166A40",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166A50",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166A60",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166A70",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166A80",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166A90",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166AA0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00166BE0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00167420",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00197900",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x0019A640",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x0019B920",
+    "observed": true,
+    "note": "Indirect-call target observed in gameplay after the first scripted event ([ICALL] Failed to resolve, the game stalled). Right after ret 4, in a gap no detected function covers."
+  },
+  {
+    "start": "0x001A85F0",
+    "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
   }
 ]
