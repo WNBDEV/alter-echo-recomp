@@ -104,6 +104,7 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 22 | With the PFB flush acknowledged promptly, the game stalled in D3D's `BlockOnTime` with GET = PUT: 29 fences never executed | Two toolkit bugs. (a) The pushbuffer was scanned as `[last PUT, PUT)` with the ring's seam guessed; it is now executed from GET to PUT following the lap's JUMP, GET is published after every command, and the initial PUT of 0 is no longer walked as commands. (b) The real cause of the lost fences: the PGRAPH handler's write-one-to-clear was a no-op on plain memory, so D3D's DPC ran it dozens of times per trap and set `BlockOnTime`'s event each time; a late set woke the next wait early and D3D overwrote unread pushbuffer. PGRAPH writes are now trapped while a trap is pending and `PGRAPH_INTR` gets real W1C semantics (one event per trap). Found with a page watch on the overwritten word, D3D's fence table (`dev+0x4C`) checked against executed releases, and per-trap event counts | `../xboxrecomp/src/kernel/nv2a_pb_scan.c`, `xbox_memory_layout.c`, `kernel_bridge.c` |
 | 23 | Main thread spends ~90% of the loading screen in D3D's KickOff flush spin, the timer thread in the vblank ack spin | Both wait on the poll thread, which is busy rasterising. A thread now clears those two bits once a millisecond (`RECOMP_BUSY_ACK=0` turns it off). Polling with `Sleep(0)` first cost more than it saved (3.5 vs 4.6 fps); at 1 ms it gives 6.6 vs 5.2 fps, and the loader, which runs on the main thread, reads 60% more in the same time | `../xboxrecomp/src/kernel/xbox_memory_layout.c` |
 | 24 | Raster workers idle: only triangles with a bounding box of 8,192+ pixels were split across threads, and the loading screen is ~50k small triangles a frame (a distortion grid) | Triangles are queued per draw and rasterised together, each worker taking every n-th row of all of them, so per-pixel order is kept. 5.3 vs 4.5 fps, identical frames. `RECOMP_RASTER_BATCH=0` goes back | `../xboxrecomp/src/kernel/nv2a_pb_exec.c` |
+| 25 | Gameplay ~6.3 fps. `RECOMP_WAIT_PROFILE=1` (new) showed the main thread 93% in `BlockOnTime`'s wait (GPU-bound); `RECOMP_GPU_PROFILE=1` (new) showed the pool 85% busy, so the cost is per pixel | Combiner mappings decoded once per input instead of per channel (bit-identical over 2M random programs); power-of-two fast paths for swizzled addressing and wrap (identical over every coordinate checked); raster pool default ncpu-1 instead of ncpu-4. 8.1 fps on the same scene | `../xboxrecomp/src/kernel/nv2a_combiner.c`, `nv2a_pb_exec.c`, `src/d3d/d3d8_swizzle.h`, `kernel_bridge.c` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 
@@ -226,7 +227,7 @@ answering as the Xbox's Pentium III.
 cinematic -> a few seconds of "Loading" -> the in-engine cutscene (Nevin wakes
 up, subtitled dialogue) -> the player in control in the first corridor of
 `L00_A1`, with the HUD (`logs/first-gameplay.png`; `logs/first-level-paused.png`
-is the pause menu over the 3D scene). ~6 fps.
+is the pause menu over the 3D scene). ~6 fps at first, ~8 after fix 25.
 
 What it took, after the level's modules loaded: the loader runs on the main
 thread, which spent ~90% of its time spinning in D3D's KickOff on the PFB
