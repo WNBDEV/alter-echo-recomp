@@ -207,3 +207,22 @@ RECOMP_EXT_VMA=1 RECOMP_AC97_READY=1 RECOMP_DSP_ACK=0x808A8810 \
 RECOMP_USB=1 RECOMP_IRQL_LOCK=1 RECOMP_PB_EXEC=1 RECOMP_TITLE_KEVENTS=1 RECOMP_VBLANK=1 \
 RECOMP_FB_WINDOW=1 ./run.sh
 ```
+
+**Milestone (15 Oct 2026 ~05:50): a new game starts.** Intro video →
+main menu (`logs/main-menu-full.png`) → Start Game → the intro cinematic
+plays (`logs/intro-cinematic.png`, a few colour-speckle artifacts) → the
+first level `L00_A1` loads with its modules.
+
+Toolkit fix found on the way: `cpuid`, `pushfd` and `popfd` were never
+lifted, so RAD's MMX check returned garbage and Bink took a fallback path
+that called a NULL decoder pointer. They're now lifted, with `cpuid`
+answering as the Xbox's Pentium III.
+
+**Next: in-level rendering.** In `L00_A1` the GPU executor processes ~60k
+draws and rasterises ~137k triangles, but every presented frame is black,
+at ~4.6 fps. Both are software-rasteriser problems (correctness first:
+render targets, combiners, textures; then speed). The toolkit also has a
+D3D11 backend (`src/nv2a/nv2a_pgraph_d3d11.c`) that is worth evaluating.
+Other open items: the DSP ack is a hand-entered address (the GP DSP needs
+real command handling), the stray white triangle on the menu, and the Bink
+speckles.
