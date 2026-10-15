@@ -105,6 +105,8 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 23 | Main thread spends ~90% of the loading screen in D3D's KickOff flush spin, the timer thread in the vblank ack spin | Both wait on the poll thread, which is busy rasterising. A thread now clears those two bits once a millisecond (`RECOMP_BUSY_ACK=0` turns it off). Polling with `Sleep(0)` first cost more than it saved (3.5 vs 4.6 fps); at 1 ms it gives 6.6 vs 5.2 fps, and the loader, which runs on the main thread, reads 60% more in the same time | `../xboxrecomp/src/kernel/xbox_memory_layout.c` |
 | 24 | Raster workers idle: only triangles with a bounding box of 8,192+ pixels were split across threads, and the loading screen is ~50k small triangles a frame (a distortion grid) | Triangles are queued per draw and rasterised together, each worker taking every n-th row of all of them, so per-pixel order is kept. 5.3 vs 4.5 fps, identical frames. `RECOMP_RASTER_BATCH=0` goes back | `../xboxrecomp/src/kernel/nv2a_pb_exec.c` |
 | 25 | Gameplay ~6.3 fps. `RECOMP_WAIT_PROFILE=1` (new) showed the main thread 93% in `BlockOnTime`'s wait (GPU-bound); `RECOMP_GPU_PROFILE=1` (new) showed the pool 85% busy, so the cost is per pixel | Combiner mappings decoded once per input instead of per channel (bit-identical over 2M random programs); power-of-two fast paths for swizzled addressing and wrap (identical over every coordinate checked); raster pool default ncpu-1 instead of ncpu-4. 8.1 fps on the same scene | `../xboxrecomp/src/kernel/nv2a_combiner.c`, `nv2a_pb_exec.c`, `src/d3d/d3d8_swizzle.h`, `kernel_bridge.c` |
+| 26 | `[ICALL] Failed to resolve VA 0x0006B080`, ~45/s in gameplay | It starts after `ret 4`, a 4-entry jump table and nop padding; the detector read the table as code and folded it into `sub_0006AF00`. Seeded, plus 21 more found by scanning every function's range for an aligned prologue behind ret/jump table + padding. No unresolved indirect calls in gameplay after | `seed_functions.json` |
+| 27 | No sound at all: `RECOMP_AUDIO_STATS=1` (new) showed up to 9 voices playing and signal in the mixbins, but peak 0 at XAudio2 | The output stage cleared the buffer holding the DSP mixdown and filled it from the test tone and software mixer only, and submitted 4x real time (3 of 4 buffers dropped). It now plays the mixdown with those mixed on top, in whole buffers. `RECOMP_AUDIO_DUMP=<file>` (new) captures it: music and speech by spectrum, real-time rate. `logs/audio.wav` is 90 s from the intro | `../xboxrecomp/src/apu/apu_core.c`, `apu_xaudio2.c` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 
@@ -249,7 +251,7 @@ nothing; a press once the level runs opens the pause menu:
   missing corner triangle in the loading screen's post-effect pass.
 - Play further: movement and combat with a real controller
   (`RECOMP_USB=1` takes XInput input), the first checkpoints.
-- Audio: the DSP ack is a hand-entered address (the GP DSP needs real
-  command handling), and music streaming stops once its first buffers are
-  read.
+- Audio plays now (fix 27), but through the GP/EP stub: every mixbin summed,
+  even bins left and odd right, no effects (reverb etc.). The DSP ack is a
+  hand-entered address; the GP DSP needs real command handling for both.
 - Bink speckles.
