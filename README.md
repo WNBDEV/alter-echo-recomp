@@ -100,6 +100,9 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 18 | Software method 9 sometimes "NOT handled after 500 ms" | Deadlock: the executor (on the poll thread) waited for the DPC, while D3D's vblank ack loop in the DPC waited for the poll thread to clear PMC's PCRTC bit. The stall loop now clears acknowledged vblanks itself; the timer thread is woken by an event instead of a 10 ms sleep, so methods are delivered in ~2 ms | `kernel_bridge.c` |
 | 19 | 18 unresolved calls to `0x00104330` (a vtable `jmp` thunk) + 15 into D3D function tables | Seeded 90 16-byte-aligned starts after `ret`/`jmp` + padding (boundary verified by linear decode) plus the observed ones | `seed_functions.json` |
 | 20 | Unresolved stubs were silent | The generator now makes each stub report its first call (`[STUB] ... reached from ...`); none fire in current runs | `../xboxrecomp/tools/recomp/translator.py`, `kernel_bridge.c` |
+| 21 | Loading screen black; the 2D objects on subchannels 1-3 (NV039, NV09F image blit, NV062 surfaces) were ignored | The executor now binds objects through RAMHT and performs NV09F blits; the game copies its back buffer into a post-effects texture that way. The "Loading" screen appears | `../xboxrecomp/src/kernel/nv2a_pb_exec.c` |
+| 22 | With the PFB flush acknowledged promptly, the game stalled in D3D's `BlockOnTime` with GET = PUT: 29 fences never executed | Two toolkit bugs. (a) The pushbuffer was scanned as `[last PUT, PUT)` with the ring's seam guessed; it is now executed from GET to PUT following the lap's JUMP, GET is published after every command, and the initial PUT of 0 is no longer walked as commands. (b) The real cause of the lost fences: the PGRAPH handler's write-one-to-clear was a no-op on plain memory, so D3D's DPC ran it dozens of times per trap and set `BlockOnTime`'s event each time; a late set woke the next wait early and D3D overwrote unread pushbuffer. PGRAPH writes are now trapped while a trap is pending and `PGRAPH_INTR` gets real W1C semantics (one event per trap). Found with a page watch on the overwritten word, D3D's fence table (`dev+0x4C`) checked against executed releases, and per-trap event counts | `../xboxrecomp/src/kernel/nv2a_pb_scan.c`, `xbox_memory_layout.c`, `kernel_bridge.c` |
+| 23 | Main thread spends ~90% of the loading screen in D3D's KickOff flush spin, the timer thread in the vblank ack spin | Both wait on the poll thread, which is busy rasterising. `RECOMP_BUSY_ACK=1` clears those two bits from a thread of their own. It works (no lost commands after #22) but doesn't pay: the rasteriser is the bottleneck and the spinning thread takes a core (3.5 fps vs 4.6), so it is off by default | `../xboxrecomp/src/kernel/xbox_memory_layout.c` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 
@@ -218,11 +221,23 @@ lifted, so RAD's MMX check returned garbage and Bink took a fallback path
 that called a NULL decoder pointer. They're now lifted, with `cpuid`
 answering as the Xbox's Pentium III.
 
-**Next: in-level rendering.** In `L00_A1` the GPU executor processes ~60k
-draws and rasterises ~137k triangles, but every presented frame is black,
-at ~4.6 fps. Both are software-rasteriser problems (correctness first:
-render targets, combiners, textures; then speed). The toolkit also has a
-D3D11 backend (`src/nv2a/nv2a_pgraph_d3d11.c`) that is worth evaluating.
-Other open items: the DSP ack is a hand-entered address (the GP DSP needs
-real command handling), the stray white triangle on the menu, and the Bink
-speckles.
+**Next: in-level rendering.** `L00_A1` loads its modules and runs: the
+executor handles ~35k draws and rasterises ~500k triangles per 10 s, at
+~4.6 fps. But the presented frame still shows the "Loading" screen
+throughout (checked to 200 s), and after ~50 s the only I/O, the level's
+music stream (`L00_A1_030_whoisthat.xmu`), stops. Find out what the frame is:
+dump the render target `0x801B0000`, the post-effects texture `0x804D6000`
+and the front buffers, and check whether the 3D pass draws into a surface
+that never reaches the screen. Speed is the software rasteriser
+(`sample_tex`, `nv2a_rc_eval`, `nv2a_rc_unpack` in samples); the main thread
+is not the limit.
+
+A pad script that works whatever the boot speed: START every 3 s from 18 s to
+60 s (it is accepted on the title screen, selects Start Game and skips the
+cinematic), nothing after, so the level isn't paused:
+`RECOMP_PAD_SCRIPT=$(seq 18000 3000 60000 | sed 's/$/:start:300/' | paste -sd,)`.
+
+The toolkit also has a D3D11 backend (`src/nv2a/nv2a_pgraph_d3d11.c`), but
+it only translates another title's 2D menu. Other open items: the DSP ack is
+a hand-entered address (the GP DSP needs real command handling), the stray
+white triangle on the menu, and the Bink speckles.
