@@ -18,6 +18,29 @@ fi
 
 cd "$(dirname "$0")"
 
+# What this build needs to get from boot to gameplay, on unless already set
+# (any of them can be overridden from the environment, 0 to turn one off):
+#   EXT_VMA      address space for the runtime-loaded game modules
+#   AC97_READY   audio hardware present (DirectSound initialises)
+#   DSP_ACK      stand-in for the audio DSP's command acknowledgement
+#   USB          the controller arrives over the emulated USB port
+#   KEYBOARD     the framebuffer window's keys drive pad 1 (see below)
+#   IRQL_LOCK    DPCs and the game thread do not race (controller setup)
+#   PB_EXEC      the GPU command executor -- without it nothing is drawn
+#   TITLE_KEVENTS, VBLANK   events and the frame clock D3D waits on
+#   FB_WINDOW    the window that shows the frames
+# Without these the game runs but draws nothing and opens no window.
+#
+# Keys (window focused): arrows d-pad, Enter START, Z/X/A/S = A/B/X/Y,
+# numpad 8/4/2/6 left stick, I/J/K/L right stick, 1/3 triggers, Q/E
+# white/black, Backspace BACK. An XInput controller works as well.
+for v in EXT_VMA AC97_READY USB KEYBOARD IRQL_LOCK PB_EXEC TITLE_KEVENTS \
+         VBLANK FB_WINDOW; do
+    eval ": \"\${RECOMP_$v:=1}\""
+    export "RECOMP_$v"
+done
+export RECOMP_DSP_ACK="${RECOMP_DSP_ACK:-0x808A8810}"
+
 export WINEPREFIX="$HOME/.local/share/wineprefixes/alter-echo-recomp"
 export WINEDEBUG="${WINEDEBUG:--all}"
 

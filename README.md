@@ -209,13 +209,15 @@ Further fixes found along the way:
 Start Game / Load Game / Options / Extras / Credits (`logs/main-menu.png`).
 The background is flat, since Bink video was failing (being fixed now).
 
-Current run command (as your own user):
+Run it as your own user (not root): `./run.sh`. It now turns on everything
+this build needs by default (the list and what each does is at the top of
+`run.sh`); without those switches the game runs but opens no window, which
+looked like it not starting at all.
 
-```bash
-RECOMP_EXT_VMA=1 RECOMP_AC97_READY=1 RECOMP_DSP_ACK=0x808A8810 \
-RECOMP_USB=1 RECOMP_IRQL_LOCK=1 RECOMP_PB_EXEC=1 RECOMP_TITLE_KEVENTS=1 RECOMP_VBLANK=1 \
-RECOMP_FB_WINDOW=1 ./run.sh
-```
+Keys, with the window focused: arrows d-pad, Enter START, Z/X/A/S = A/B/X/Y,
+numpad 8/4/2/6 left stick (movement), I/J/K/L right stick (camera), 1/3
+triggers, Q/E white/black, Backspace BACK. An XInput controller works too.
+Expect ~9 fps in the level: the GPU is emulated in software.
 
 **Milestone (15 Oct 2026 ~05:50): a new game starts.** Intro video →
 main menu (`logs/main-menu-full.png`) → Start Game → the intro cinematic
