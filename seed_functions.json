@@ -509,5 +509,385 @@
   {
     "start": "0x0016F530",
     "note": "D3D's NV2A interrupt service routine (KeConnectInterrupt vector 3); only reached through the interrupt object"
+  },
+  {
+    "start": "0x00104330",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x00167E30",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x00167F70",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x001681E0",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x00168230",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x00168290",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x00168300",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x00169110",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x00169180",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x001691F0",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x00169210",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x00169230",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x00169290",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x001692D0",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x00169350",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x001693A0",
+    "observed": true,
+    "note": "Indirect-call target observed at runtime (vtable thunk / D3D function table)"
+  },
+  {
+    "start": "0x00017F70",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00018580",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00032490",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00035F50",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x000366B0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00036CC0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x0004F040",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x0005C5C0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00063F40",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x0006A200",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x0006C590",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x000739F0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x000874F0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00093240",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00093640",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x000937C0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00093950",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00093F00",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00094120",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00095F50",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x000974E0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x000FA490",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x0010B920",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00113F70",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001176B0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00118B60",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x0014B350",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x0014B4D0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166660",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166670",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166690",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001666A0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001666C0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001666D0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001666E0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001666F0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166710",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166720",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166730",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166740",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166750",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166760",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166770",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166780",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166790",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001667A0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001667C0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001667E0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001667F0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166800",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166820",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166830",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166840",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166850",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166860",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166870",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166880",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001668A0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001668C0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x001668D0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166AB0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166AD0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166AE0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166AF0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166B00",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166B10",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166B20",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166B30",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166B70",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166B80",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166B90",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166BA0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166BB0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00166BD0",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
+  },
+  {
+    "start": "0x00169250",
+    "note": "16-byte aligned start after ret/jmp + padding, not detected (indirect-only); boundary verified by linear decode"
   }
 ]

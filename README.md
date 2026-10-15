@@ -96,21 +96,36 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 15 | Run 13: software methods "declined" | D3D's ISR only claims and queues a DPC; the DPC's PGRAPH handler (`0x0016FD30`) does the work, and it zeroes `PGRAPH_FIFO` on entry and sets it to 1 on exit. Delivery now waits for that 1 and clears the status bits only then (the poll thread that zeroes them is the one stalled on the method, so it can't race) | `../xboxrecomp/src/kernel/kernel_bridge.c` |
 | 16 | Run 14: game reaches state 9, presents frames, 2,084 triangles rasterised, **0 pixels written** | `RECOMP_PB_ZERO_DIAG` (new) showed alpha test on, and `RECOMP_FRAME_TRACE` showed vertex `w = inf`: D3D's XYZRHW path gives w = 1/rhw and the text has rhw = 0, so 1/w = 0, texcoords 0/0 = NaN, and NaN alpha failed the test. w of 0 or infinity is now treated as 1 for perspective, as xemu does. **First rendered frame: the copyright screen** (`logs/first-frame.png`) | `../xboxrecomp/src/kernel/nv2a_pb_exec.c` |
 
-## Where it stands (15 Oct 2026, ~00:45)
+| 17 | ~2 flips/min after the copyright screen; D3D saw 10 of ~1,500 vblanks in 25 s | The NV2A poll loop zeroes `PMC_INTR_0`/`PCRTC_INTR_0` continuously (and never sleeps), so it beat D3D's DPC to every delivered vblank. Vblanks are now marked unacknowledged (`XBOX_NV2A_VBLANK_UNACKED`, an undefined PCRTC bit); the poll loop leaves them until the ISR's write-one-to-clear drops the mark. 1,116 vblanks in 25 s after | `../xboxrecomp/src/kernel/xbox_memory_layout.{c,h}`, `kernel_bridge.c` |
+| 18 | Software method 9 sometimes "NOT handled after 500 ms" | Deadlock: the executor (on the poll thread) waited for the DPC, while D3D's vblank ack loop in the DPC waited for the poll thread to clear PMC's PCRTC bit. The stall loop now clears acknowledged vblanks itself; the timer thread is woken by an event instead of a 10 ms sleep, so methods are delivered in ~2 ms | `kernel_bridge.c` |
+| 19 | 18 unresolved calls to `0x00104330` (a vtable `jmp` thunk) + 15 into D3D function tables | Seeded 90 16-byte-aligned starts after `ret`/`jmp` + padding (boundary verified by linear decode) plus the observed ones | `seed_functions.json` |
+| 20 | Unresolved stubs were silent | The generator now makes each stub report its first call (`[STUB] ... reached from ...`); none fire in current runs | `../xboxrecomp/tools/recomp/translator.py`, `kernel_bridge.c` |
 
-Boots, runs its engine init, loads shaders and textures, reads a (virtual)
-controller, and draws its copyright screen. It then presents only ~2 frames a
-minute and doesn't move past that screen. Main thread mostly idle;
-`KeSetEvent` is called ~6,500/s. Likely cause: frame pacing hangs on vblank,
-and the NV2A poll loop's `NV2A_ACK` table zeroes `PMC_INTR_0` / `PCRTC_INTR_0`
-continuously, racing the vblank interrupts `RECOMP_VBLANK` now delivers (its
-comment predates any interrupt being raised). Proper fix: real
-write-one-to-clear for those registers, or clearing them after the DPC has run,
-the way fix 15 does for PGRAPH. Line 5 of the copyright text is also missing
-its first words: possibly the second font page, not yet looked at.
+## Where it stands (15 Oct 2026, ~01:35)
 
-Also still open: 187 unresolved call targets that land *inside* detected
-functions (`recomp_stubs_unresolved.c`); `seed_text_functions.json` is unused.
+Boots, runs engine init, shows the copyright screen at a steady frame rate,
+finishes it, and hangs entering state 10 (`0xB4880` → `sub_0002C810` →
+camera update → slerp with t = inf on a NULL keyframe track).
+
+**Root cause, and the big one: Alter Echo loads game code at runtime.** The
+object scripts (Nevin, enemies, effects -- `object_*.dll`) are PE DLLs packed
+inside the `.orf`/`.clf` archives, loaded by the game's own loader
+(`InitializeDLL`, `DLLFixupNames`, "Image not a DLL"). None of that code was
+translated, so the calls into them (`[ICALL] target 0x01F60E50 is not code`)
+are skipped, Nevin never initialises ("Nevin wasn't loaded, can't continue!"),
+no camera animation is created, and the camera code dereferences NULL.
+
+Size of it: 2,918 module instances in 53 files, **314 unique images (210
+names), 2.6 MB of code**. Every module is a plain PE DLL, preferred base
+`0x10000000`, 60-90 KB, no imports, with relocations and the same ten exports
+(`CreateInstance`, `CallInstanceEvent`, `InitializeDLL`, ...). That uniformity
+makes a second, ahead-of-time stage feasible: extract and dedupe the modules,
+give each a fixed guest base, translate each at that base, and make the game's
+loader place each module at its base so its own relocation produces the image
+that was translated.
+
+Still open beyond that: audio (`RECOMP_AC97_READY=1` stalls engine init in
+state 1); 193 unresolved call targets inside detected functions.
 
 ### Running with a virtual controller
 
