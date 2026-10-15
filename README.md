@@ -109,6 +109,10 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 27 | No sound at all: `RECOMP_AUDIO_STATS=1` (new) showed up to 9 voices playing and signal in the mixbins, but peak 0 at XAudio2 | The output stage cleared the buffer holding the DSP mixdown and filled it from the test tone and software mixer only, and submitted 4x real time (3 of 4 buffers dropped). It now plays the mixdown with those mixed on top, in whole buffers. `RECOMP_AUDIO_DUMP=<file>` (new) captures it: music and speech by spectrum, real-time rate. `logs/audio.wav` is 90 s from the intro | `../xboxrecomp/src/apu/apu_core.c`, `apu_xaudio2.c` |
 | 28 | A white box over most of the view from the first tutorial popup ("Press A to jump") on | `RECOMP_FRAME_TRACE_METHODS` on that frame: the popup stamps the stencil buffer with a safe-area quad drawn with stencil func NEVER / fail REPLACE, which writes no colour on hardware. The rasteriser had no stencil at all. Added an 8-bit stencil buffer per zeta surface with the full test and ops. Also a per-draw vertex cache (verified against fresh runs) | `../xboxrecomp/src/kernel/nv2a_pb_exec.c` |
 | 29 | Flat white triangles on brightly lit walls | Vertex colour outputs were not saturated to [0, 1] as the NV2A (and xemu) does; a diffuse of 2.3 scaled every texel. Clamped. What white remains is holes where nothing draws in some frames (`RECOMP_DEBUG_HOLES=1` paints them magenta), not shading | `nv2a_pb_exec.c` |
+| 30 | Gunshots, impacts and sword hits thin and metallic ("tinny"); music fine | `RECOMP_AUDIO_STATS` now also counts voices by source rate: in play over half the voice-frames come from samples below 16 kHz and more from 16-24 kHz. The voice processor ignored the pitch register and read one source sample per 48 kHz output sample, so those played 2-4.4x too fast. Four-point Catmull-Rom resampler per voice. Same actions on the user's save, before and after: spectral centroid of each attack 4.5-7.7 kHz -> 1.2-2.2 kHz, no clipping (`logs/audio-ab/` has the clips) | toolkit `src/apu/apu_vp.c` |
+| 31 | (same report) | The stopgap mixdown (fix 27) put centre into the left channel only, LFE into the right only, and summed the I3DL2 reverb and effect sends in raw. Now a speaker fold-down: front, back and crosstalk pairs to their own side, centre -3 dB into both, LFE low-passed into both, sends dropped (with no GP DSP they are dry duplicates). `RECOMP_APU_MIXDOWN_ALL=1` restores the plain sum | toolkit `src/apu/apu_dsp.c` |
+| 32 | Black triangles on faces in cutscenes (user report) | Face culling was never implemented: SET_CULL_FACE_ENABLE / CULL_FACE / FRONT_FACE were ignored and every back face drawn, and odd strip triangles had their winding flipped. Both renderers cull now. `RECOMP_CULL=2` (the opposite winding) turns the cave inside out, which confirms the convention; `=0` disables. Ruled out on the way: polygon offset (never sent) and NaN vertex colours (`RECOMP_VSH_NAN=1`, new: none in 18 M vertices). Not confirmed as the user's triangles: the one dark mark captured, under Nevin's eye, survives culling and is not in his face texture | toolkit `nv2a_pb_exec.c`, `nv2a_gpu_d3d11.c` |
+| 33 | `[ICALL] Failed to resolve VA 0x00146140`, 512 times in a 20-minute session | A virtual method reached only through its vtable (a draw through the renderer interface). Scanning every pointer from the data sections into `.text` found it as the only 16-byte-aligned, prologue-shaped target missing from the dispatch table. Seeded | `seed_functions.json` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 
@@ -245,6 +249,14 @@ Pad script that reaches gameplay unpaused: START every 3 s from 18 s to 39 s
 nothing; a press once the level runs opens the pause menu:
 `RECOMP_PAD_SCRIPT=$(seq 18000 3000 39000 | sed 's/$/:start:300/' | paste -sd,)`.
 
+To test from a save instead, drive the menus live, since the intro's length
+drifts by 15 s between runs: start with `RECOMP_PAD_LIVE=logs/pad.live` and
+`RECOMP_FB_WINDOW_DUMP_EVERY=2`, look at `logs/frame.bmp`, and append presses
+(`echo a >> logs/pad.live`). From the main menu (one START once the logos
+are skippable, ~24 s): `down`, `a` (Load Game), `a` (Save Game 1, the newest),
+`a` (restore). In the level, RT/LT toggle the sword and gun forms; X, B and Y
+attack in either.
+
 **Milestone (15 Oct 2026, evening): rendering on the graphics card.** With
 the toolkit's new Direct3D 11 backend (`RECOMP_GPU=1`, now `run.sh`'s
 default; branch `gpu-backend` of the toolkit) the first level runs at 35 fps
@@ -269,7 +281,10 @@ software rasteriser, which stays as the reference.
   nothing). Occlusion-query results (zpass reports) are the next suspect.
 - Play further: movement and combat with a real controller
   (`RECOMP_USB=1` takes XInput input), the first checkpoints.
-- Audio plays now (fix 27), but through the GP/EP stub: every mixbin summed,
-  even bins left and odd right, no effects (reverb etc.). The DSP ack is a
+- Audio plays at the right pitch now (fixes 27, 30, 31), still through the
+  GP/EP stub: a stereo fold-down, no effects (reverb etc.). The DSP ack is a
   hand-entered address; the GP DSP needs real command handling for both.
+- The dark mark under Nevin's eye in cutscene close-ups (fix 32): not in the
+  face texture, not back faces, not NaN. Next suspects: the eye/eyelid
+  meshes' own textures and a second texture stage.
 - Bink speckles.

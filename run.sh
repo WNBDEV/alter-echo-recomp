@@ -57,4 +57,5 @@ mkdir -p logs
 log="logs/run-$(date +%Y%m%d-%H%M%S).txt"
 echo "stderr -> $log"
 
-wine build-win/alter_echo_recomp.exe "$@" 2> >(tee "$log" >&2)
+# RECOMP_EXE runs another build (a test link) without replacing this one.
+wine "${RECOMP_EXE:-build-win/alter_echo_recomp.exe}" "$@" 2> >(tee "$log" >&2)

@@ -1294,5 +1294,10 @@
   {
     "start": "0x001A85F0",
     "note": "16-byte-aligned start in a gap no detected function covers, behind ret/ret N/jmp or a jump table (+padding); decodes to a ret/jmp. Found by the gap scan, not yet reached."
+  },
+  {
+    "start": "0x00146140",
+    "observed": true,
+    "note": "Virtual method (vtable refs at .rdata 0x1C2074): draws through the renderer interface at [0x265360]+0x12C with 1.0 colour arguments. Indirect call to it failed 512+ times in a 20-minute session; the only 16-byte-aligned, prologue-shaped pointer from .rdata/.data into .text missing from the dispatch table."
   }
 ]
