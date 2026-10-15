@@ -247,11 +247,13 @@ nothing; a press once the level runs opens the pause menu:
 
 **Milestone (15 Oct 2026, evening): rendering on the graphics card.** With
 the toolkit's new Direct3D 11 backend (`RECOMP_GPU=1`, now `run.sh`'s
-default; branch `gpu-backend` of the toolkit) the first level runs at the
-game's own 35 fps cap instead of 7-9, at 20% CPU instead of 64% (CPU package
+default; branch `gpu-backend` of the toolkit) the first level runs at 35 fps
+instead of 7-9, at 20% CPU instead of 64% (CPU package
 60-68 C instead of 85-100 on an i7-4790K; a GTX 960 ~13% busy). Vertex
 programs still run on the CPU; rasterisation and the register combiners are
-on the GPU. Going faster exposed the game's frame limiter, which waits on the
+on the GPU. Later the same evening vertex programs moved to the GPU too
+(translated to HLSL per program): 50-57 fps, still ~23% CPU, 62-68 C. Going
+faster exposed the game's frame limiter, which waits on the
 CRTC scanline register; that is emulated now. `RECOMP_GPU=0` goes back to the
 software rasteriser, which stays as the reference.
 
