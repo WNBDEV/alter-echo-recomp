@@ -62,3 +62,6 @@ build-modules/
 src/module_layout.c
 build-abi/
 src/module_thunks.c
+
+# Compiled GPU shaders (RECOMP_SHADER_CACHE), rebuilt on demand
+shader-cache/
