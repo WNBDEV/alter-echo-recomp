@@ -65,3 +65,6 @@ src/module_thunks.c
 
 # Compiled GPU shaders (RECOMP_SHADER_CACHE), rebuilt on demand
 shader-cache/
+
+# Per-player settings (settings.example.ini is the template)
+settings.ini

@@ -7,6 +7,16 @@ with MinGW and run on Linux under Wine + DXVK.
 The decision notes behind this (emulate vs port, measurements, pros and cons)
 are in `~/Games/Xbox/alter-echo-notes.md`.
 
+## Playing
+
+`./run.sh` starts the game. Settings live in `settings.ini` (created from
+`settings.example.ini` on first run): resolution scale, fullscreen, rumble,
+reverb. While playing, **Alt+Enter** or **F11** toggles fullscreen; the
+picture keeps the console's 4:3 with black bars. An Xbox 360 pad works
+directly (with rumble); the keyboard works too -- arrows d-pad, Enter START,
+Z/X/A/S = A/B/X/Y, numpad 8/4/2/6 left stick, I/J/K/L right stick, 1/3
+triggers, Q/E white/black, Backspace BACK.
+
 ## Layout
 
 | Path | What |
@@ -126,6 +136,8 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 44 | Texture work in the GPU thread | Whole-texture decoding instead of a texel at a time; four-lane change hashing; `RECOMP_RT_DIRECT=1` (`run.sh` default) samples render targets on the GPU -- the sky's 448x448 target was read back, decoded and uploaded 60 times a second | toolkit `nv2a_pb_exec.c`, `nv2a_gpu_d3d11.c` |
 | 45 | 640x480 | `RECOMP_SCALE=N` renders at N x (default 2, 1280x960): 60 fps, GPU ~28%. Guest memory stays console-sized; readbacks are filtered down | toolkit `nv2a_gpu_d3d11.c`, `fb_present.c`; `run.sh` |
 | 46 | "Missing textures" in the second mission (Surface): large flat white and pink areas | Not textures -- missing geometry. `RECOMP_TRI_PROBE` on a white pixel found only the sky backdrop behind it, and the executor's overflow warning fired: terrain chunks have more than 4096 indices per batch and the rest were dropped. Limit raised to 65536; the same walk from the user's save now shows the cliffs (the pink was correctly fogged far terrain, fog end 4500 units) | toolkit `nv2a_pb_exec.c` |
+| 47 | Window only, and stretched when resized | Borderless fullscreen on Alt+Enter/F11 (`fullscreen = 1` in settings.ini starts that way); the swap chain follows the window and the frame is letterboxed at 4:3 | toolkit `fb_present.c`, `nv2a_gpu_d3d11.c` |
+| 48 | The Vibration option did nothing | XAPI's rumble output reports (a class SET_REPORT on the control pipe, in Alter Echo) were accepted and dropped; now decoded and passed to XInput (`rumble = 0` turns it off) | toolkit `ohci.c`, `usb_gamepad.c` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 

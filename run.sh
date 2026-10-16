@@ -47,6 +47,30 @@ for v in EXT_VMA AC97_READY USB KEYBOARD IRQL_LOCK PB_EXEC TITLE_KEVENTS \
 done
 export RECOMP_DSP_ACK="${RECOMP_DSP_ACK:-0x808A8810}"
 
+# settings.ini (from settings.example.ini on first run): friendly names for
+# the switches below. The environment wins over the file, the file over the
+# defaults.
+SETTINGS=settings.ini
+if [ ! -f "$SETTINGS" ] && [ -f settings.example.ini ]; then
+    cp settings.example.ini "$SETTINGS"
+fi
+if [ -f "$SETTINGS" ]; then
+    while IFS='=' read -r key val || [ -n "$key" ]; do
+        key="${key%%#*}"; key="$(printf '%s' "$key" | tr -d ' \t\r')"
+        val="${val%%#*}"; val="$(printf '%s' "$val" | tr -d ' \t\r')"
+        [ -n "$key" ] && [ -n "$val" ] || continue
+        case "$key" in
+            resolution_scale)      var=RECOMP_SCALE ;;
+            fullscreen)            var=RECOMP_FULLSCREEN ;;
+            rumble)                var=RECOMP_RUMBLE ;;
+            reverb)                var=RECOMP_REVERB ;;
+            direct_render_targets) var=RECOMP_RT_DIRECT ;;
+            *) echo "settings.ini: unknown setting '$key' (ignored)" >&2; continue ;;
+        esac
+        [ -n "${!var:-}" ] || export "$var=$val"
+    done < "$SETTINGS"
+fi
+
 # Rendering and memory, each overridable the same way:
 #   RECOMP_SCALE=2      render at 2x the console's 640x480 (1280x960); 1 for
 #                       the original, 3 or 4 for more if the GPU keeps up
