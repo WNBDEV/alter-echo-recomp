@@ -47,6 +47,19 @@ for v in EXT_VMA AC97_READY USB KEYBOARD IRQL_LOCK PB_EXEC TITLE_KEVENTS \
 done
 export RECOMP_DSP_ACK="${RECOMP_DSP_ACK:-0x808A8810}"
 
+# Rendering and memory, each overridable the same way:
+#   RECOMP_SCALE=2      render at 2x the console's 640x480 (1280x960); 1 for
+#                       the original, 3 or 4 for more if the GPU keeps up
+#   RECOMP_STACK_KB     the main-thread stack region. 8 MB was the toolkit's
+#                       default and came out of the game's heap: levels left
+#                       285 KB free and a move video then crashed or hung the
+#                       game. The thread uses ~20 KB (it asks for 256 KB).
+#   RECOMP_RT_DIRECT=1  effects that sample a frame they rendered (sky, glow)
+#                       read it on the GPU, not through a readback each frame
+export RECOMP_SCALE="${RECOMP_SCALE:-2}"
+export RECOMP_STACK_KB="${RECOMP_STACK_KB:-2048}"
+export RECOMP_RT_DIRECT="${RECOMP_RT_DIRECT:-1}"
+
 # Raster threads, for the software rasteriser (RECOMP_GPU=0) only: there the
 # GPU is emulated on the CPU, and every thread given to it is a core kept busy. Four is the measured sweet spot on a 4-core/8-thread
 # i7-4790K: 7.3 fps at ~3 cores of load, against 8.6 fps at ~5 with seven
