@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <stddef.h>
 #include <stdint.h>
 
 /* ── ICALL trace ring buffer ───────────────────────────────── */

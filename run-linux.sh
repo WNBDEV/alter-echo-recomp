@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# Run the native Linux build (build-linux/, see README "Native Linux build").
+#
+#   ./run-linux.sh
+#
+# Same switches and settings.ini as run.sh, no Wine. Experimental. Window,
+# sound and controller go through SDL2; drawing goes through the same Direct3D
+# 11 backend as under Wine, on DXVK Native (Vulkan), when its libraries and
+# vkd3d-utils are found -- in build-linux/deps (setup-linux.sh fetches them)
+# or installed system-wide -- and through the much slower software rasteriser
+# when they are not.
+set -euo pipefail
+
+if [ "$(id -u)" -eq 0 ]; then
+    exec sudo -u "$(stat -c %U "$0")" -H \
+        --preserve-env=DISPLAY,XAUTHORITY,WAYLAND_DISPLAY,XDG_RUNTIME_DIR,PULSE_SERVER "$0" "$@"
+fi
+
+cd "$(dirname "$0")"
+
+# What this build needs to get from boot to gameplay, on unless already set
+# (any of them can be overridden from the environment, 0 to turn one off):
+#   EXT_VMA      address space for the runtime-loaded game modules
+#   AC97_READY   audio hardware present (DirectSound initialises)
+#   DSP_ACK      stand-in for the audio DSP's command acknowledgement
+#   USB          the controller arrives over the emulated USB port
+#   KEYBOARD     the framebuffer window's keys drive pad 1 (see below)
+#   IRQL_LOCK    DPCs and the game thread do not race (controller setup)
+#   PB_EXEC      the GPU command executor -- without it nothing is drawn
+#   TITLE_KEVENTS, VBLANK   events and the frame clock D3D waits on
+#   FB_WINDOW    the window that shows the frames
+# Without these the game runs but draws nothing and opens no window.
+#
+# Keys (window focused): arrows d-pad, Enter START, Z/X/A/S = A/B/X/Y,
+# numpad 8/4/2/6 left stick, I/J/K/L right stick, 1/3 triggers, Q/E
+# white/black, Backspace BACK. An XInput controller works as well.
+#   GPU          draw with the graphics card (Direct3D 11 via DXVK); 0 falls
+#                back to the software rasteriser
+#   HEAP_VFREE   video buffers the game frees go back to the heap. Without
+#                it every video leaked them, and some minutes into play a
+#                tutorial video found no memory and the game hung. (The full
+#                RECOMP_HEAP_RECLAIM stalls this game before its first frame.)
+for v in EXT_VMA AC97_READY USB KEYBOARD IRQL_LOCK PB_EXEC TITLE_KEVENTS \
+         VBLANK FB_WINDOW GPU HEAP_VFREE; do
+    eval ": \"\${RECOMP_$v:=1}\""
+    export "RECOMP_$v"
+done
+export RECOMP_DSP_ACK="${RECOMP_DSP_ACK:-0x808A8810}"
+
+# settings.ini (from settings.example.ini on first run): friendly names for
+# the switches below. The environment wins over the file, the file over the
+# defaults.
+SETTINGS=settings.ini
+if [ ! -f "$SETTINGS" ] && [ -f settings.example.ini ]; then
+    cp settings.example.ini "$SETTINGS"
+fi
+if [ -f "$SETTINGS" ]; then
+    while IFS='=' read -r key val || [ -n "$key" ]; do
+        key="${key%%#*}"; key="$(printf '%s' "$key" | tr -d ' \t\r')"
+        val="${val%%#*}"; val="$(printf '%s' "$val" | tr -d ' \t\r')"
+        [ -n "$key" ] && [ -n "$val" ] || continue
+        case "$key" in
+            resolution_scale)      var=RECOMP_SCALE ;;
+            fullscreen)            var=RECOMP_FULLSCREEN ;;
+            rumble)                var=RECOMP_RUMBLE ;;
+            reverb)                continue ;;   # see settings.example.ini history:
+                                                   # the game sends nothing to the
+                                                   # console's reverb, so it has none
+            direct_render_targets) var=RECOMP_RT_DIRECT ;;
+            *) echo "settings.ini: unknown setting '$key' (ignored)" >&2; continue ;;
+        esac
+        [ -n "${!var:-}" ] || export "$var=$val"
+    done < "$SETTINGS"
+fi
+
+# Rendering and memory, each overridable the same way:
+#   RECOMP_SCALE=2      render at 2x the console's 640x480 (1280x960); 1 for
+#                       the original, 3 or 4 for more if the GPU keeps up
+#   RECOMP_STACK_KB     the main-thread stack region. 8 MB was the toolkit's
+#                       default and came out of the game's heap: levels left
+#                       285 KB free and a move video then crashed or hung the
+#                       game. The thread uses ~20 KB (it asks for 256 KB).
+#   RECOMP_RT_DIRECT=1  effects that sample a frame they rendered (sky, glow)
+#                       read it on the GPU, not through a readback each frame
+export RECOMP_SCALE="${RECOMP_SCALE:-2}"
+export RECOMP_STACK_KB="${RECOMP_STACK_KB:-2048}"
+export RECOMP_RT_DIRECT="${RECOMP_RT_DIRECT:-1}"
+
+# Raster threads, for the software rasteriser (RECOMP_GPU=0) only: there the
+# GPU is emulated on the CPU, and every thread given to it is a core kept busy. Four is the measured sweet spot on a 4-core/8-thread
+# i7-4790K: 7.3 fps at ~3 cores of load, against 8.6 fps at ~5 with seven
+# threads, which drove the package to 99-100 C. More frames, more heat:
+# RECOMP_RASTER_THREADS=7 ./run.sh.
+export RECOMP_RASTER_THREADS="${RECOMP_RASTER_THREADS:-4}"
+
+# DXVK Native and vkd3d-utils from build-linux/deps, if setup put them there.
+for d in build-linux/deps/dxvk-native/usr/lib build-linux/deps/vkd3d/usr/lib; do
+    [ -d "$d" ] && LD_LIBRARY_PATH="$PWD/$d${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+done
+export LD_LIBRARY_PATH
+
+mkdir -p logs
+log="logs/native-$(date +%Y%m%d-%H%M%S).txt"
+echo "stderr -> $log"
+"${RECOMP_EXE:-build-linux/alter_echo_recomp}" "$@" 2> >(tee "$log" >&2)

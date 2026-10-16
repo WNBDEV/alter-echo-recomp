@@ -18,7 +18,7 @@ on the GPU (Direct3D 11, through DXVK on Linux).
 ## What you need
 
 - Linux with Wine and DXVK (the game is built as a Windows program; a native
-  Linux build is planned), or Windows (untested so far)
+  Linux build is in progress, below), or Windows (untested so far)
 - To build: python3, cmake, ninja, MinGW-w64 (`x86_64-w64-mingw32-gcc`), and
   the xboxrecomp toolkit checked out next to this folder (`../xboxrecomp`)
 - 20-40 minutes for the first build and several GB of free RAM
@@ -48,6 +48,27 @@ Z/X/A/S = A/B/X/Y, numpad 8/4/2/6 left stick, I/J/K/L right stick, 1/3
 triggers, Q/E white/black, Backspace BACK. Saves go where the console keeps
 them (`UDATA/` in the game folder).
 
+## Native Linux build (experimental)
+
+The same game compiled as a Linux program -- no Wine. It needs the C code
+`setup.sh` generated, so run that first, then:
+
+```bash
+./setup-linux.sh      # fetches DXVK Native + vkd3d-utils into build-linux/deps, compiles
+./run-linux.sh        # same settings.ini and keys as run.sh
+```
+
+Window, sound and controller go through SDL2. Graphics use the same Direct3D
+11 renderer as the Wine build, on DXVK Native (DXVK built as Linux libraries,
+talking to Vulkan directly); shaders compile with vkd3d-utils, the compiler
+Wine's own uses, so `shader-cache/` is shared between the two builds. Neither
+library is installed system-wide, and if either is missing the game falls
+back to the software renderer (correct, but far slower). Saves are the same
+`UDATA/` folder the Wine build uses.
+
+Status: see "Native Linux" under Development notes. `run.sh` remains the
+way to play.
+
 ## Known limits
 
 - Played through the first missions; later levels may show problems not yet
@@ -62,6 +83,26 @@ them (`UDATA/` in the game folder).
 The rest of this file is the working log of the port: what failed, how it
 was found and what fixed it. The decision notes behind the project
 (emulate vs port, measurements) are in `~/Games/Xbox/alter-echo-notes.md`.
+
+## Native Linux (16 Oct 2026, evening)
+
+`build-linux/` (`setup-linux.sh`, `run-linux.sh`): boots to the title screen
+natively -- GPU rendering through DXVK Native on Vulkan, sound through SDL2
+(PipeWire), pad and keyboard through SDL2, 60 fps. Not yet played past the
+title. What it took, in the toolkit: vectored exception handlers on
+sigaction (every device trap), the guest's 4 GB window held as one
+reservation, partition images and the utility drive's 64 KB clusters on the
+POSIX file layer, handle validation in the Win32 layer, guest functions named
+like libc ones (`close`, `write`) renamed by the lifter, and vkd3d-utils'
+ms_abi D3DCompile bridged to DXVK's calling convention.
+
+Open: after the fourth Bink video in a session the video's sound turns into a
+loud looping buzz (both builds). Contiguous memory is never reused (~4.5 MB
+per video), and the APU decides "RAM or contiguous window" for a physical
+address by the allocator's high-water mark, which then passes the sound
+buffer. RECOMP_CONTIG_FREE (reuse) fixes the buzz but the game then runs at
+20 fps; not on by default until that is understood. RECOMP_APU_VOICES traces
+voices, RECOMP_CONTIG_TRACE the arena, RECOMP_AUDIO_MUTE silences output.
 
 ## Layout
 

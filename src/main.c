@@ -32,8 +32,15 @@
  *   Kernel imports: 111
  */
 
+#ifdef _WIN32
 #include <windows.h>
 #include <dbghelp.h>
+#else
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE     /* Dl_info, dladdr */
+#endif
+#include <dlfcn.h>      /* dladdr: names a host address at a fault */
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -84,7 +91,11 @@ extern ptrdiff_t g_xbox_mem_offset;
  * project root, where game/ is a symlink to the unpacked disc.
  */
 #define YOUR_GAME_ENTRY_POINT   0x000561A2  /* XBE entry point VA */
+#ifdef _WIN32
 #define YOUR_GAME_XBE_PATH      "game\\default.xbe"
+#else
+#define YOUR_GAME_XBE_PATH      "game/default.xbe"
+#endif
 #define YOUR_GAME_DIR            "game"
 
 /* ── Forward declarations ──────────────────────────────────── */
@@ -139,6 +150,7 @@ static void print_guest_context(void *rip)
 {
     /* SYMBOL_INFO is variable-length: the name is written past the struct, so
      * it must be over-allocated with MaxNameLen set to the slack. */
+#ifdef _WIN32
     char buf[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO *sym = (SYMBOL_INFO *)buf;
     DWORD64 disp = 0;
@@ -149,6 +161,18 @@ static void print_guest_context(void *rip)
     if (SymFromAddr(GetCurrentProcess(), (DWORD64)(uintptr_t)rip, &disp, sym))
         fprintf(stderr, "  in %s+0x%llX\n",
                 sym->Name, (unsigned long long)disp);
+#else
+    /* The executable exports no symbols -- exporting them all (-rdynamic)
+     * let the guest CRT's `close` and `write` preempt the C library's -- so
+     * name the place by its offset in the file instead:
+     *   addr2line -f -e build-linux/alter_echo_recomp 0x<offset>
+     * or the nearest symbol at or below it in `nm -n`. */
+    Dl_info di;
+
+    if (dladdr(rip, &di) && di.dli_fbase)
+        fprintf(stderr, "  at %s+0x%llX\n", di.dli_fname,
+                (unsigned long long)((uintptr_t)rip - (uintptr_t)di.dli_fbase));
+#endif
 
     if (g_xbox_mem_offset && g_esp) {
         const uint32_t *sp =
@@ -352,8 +376,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     /* Load symbols up front rather than from inside the handler: at fault
      * time the process is already in a bad way, and SymInitialize
      * allocates. Failure is not fatal -- the handler prints no name. */
+#ifdef _WIN32
     SymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_UNDNAME);
     SymInitialize(GetCurrentProcess(), NULL, TRUE);
+#endif
     AddVectoredExceptionHandler(1, veh_handler);
 
     /* Step 1: Load XBE */
@@ -514,5 +540,9 @@ int main(int argc, char **argv)
 {
     (void)argc;
     (void)argv;
+#ifdef _WIN32
     return WinMain(GetModuleHandle(NULL), NULL, GetCommandLineA(), SW_SHOW);
+#else
+    return WinMain(NULL, NULL, (LPSTR)"", 0);
+#endif
 }

@@ -83,17 +83,24 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${XBOXRECOMP_DIR}/include
 )
 
-# Windows SDK libraries needed at link time
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    d3d11
-    dxgi
-    dxguid
-    xinput
-    winmm
-    # Lets the fault handler resolve the host RIP back to the generated
-    # function's symbol, i.e. to the guest function that faulted.
-    dbghelp
-)
+if(WIN32)
+    # Windows SDK libraries needed at link time
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        d3d11
+        dxgi
+        dxguid
+        xinput
+        winmm
+        # Lets the fault handler resolve the host RIP back to the generated
+        # function's symbol, i.e. to the guest function that faulted.
+        dbghelp
+    )
+else()
+    # Native build. No -rdynamic: the fault handler names a place by its
+    # offset in the executable (dladdr), and exporting every symbol would let
+    # any guest function named like a libc one preempt it.
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS} m)
+endif()
 
 # MSVC-specific: large address aware, increase section limit for big generated files
 if(MSVC)
