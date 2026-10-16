@@ -118,6 +118,9 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 36 | Hang a minute into play from the "Stealth" save: frozen frame, game thread waiting forever | At the tutorial video `TD_TUTOR.bik` the heap was exhausted: memory `NtAllocateVirtualMemory` takes from the heap was never returned by `NtFreeVirtualMemory`, so every video leaked its buffers. With none left, the decoder thread got no stack and was run inline, and the game waited on itself. `RECOMP_HEAP_VFREE` (now a `run.sh` default) returns them: 4 MB live less after one video. The full `RECOMP_HEAP_RECLAIM` stalls this game's boot, so it stays off | toolkit `kernel_bridge.c`, `xbox_memory_layout.c`; `run.sh` |
 | 37 | Uneven frame pacing: light scenes at 66 fps, menus at 129, and judder even at a steady rate | Nothing tied flips to a display rate, and the window redrew guest memory on its own 16 ms GDI loop. Frames now go from the GPU into a DXGI swap chain on the window, presented with vsync (`nv2a_gpu_present`): 60 fps on the 59.96 Hz monitor, no per-frame readback or copies. `RECOMP_GPU_PRESENT=0` restores the old path, which now caps flips at `RECOMP_FLIP_HZ` (60) | toolkit `nv2a_gpu_d3d11.c`, `fb_present.c` |
 | 38 | Hitches the first time an effect appears | Each combiner/vertex-program shader was compiled on first draw (~8 ms each, some far more) and again every session. Compiled shaders are kept in `shader-cache/` | toolkit `nv2a_gpu_d3d11.c` |
+| 39 | Videos (tutorials, the moves screen, the intro) full of striped 8x8 blocks on detailed edges | Compared with ffmpeg's decode of the same `.bik`: 96.6% of each frame bit-exact, 163 blocks wrong. The blocks traced to Bink's IDCT (`sub_001A6580`), whose `movsx ebp, bp` the lifter turned into a zero-extend: its 16-bit sign-extend list lacked `bp` and `sp`. Every negative row-6 coefficient became ~65,000. Fixed in the lifter (regression test included); the intro now matches ffmpeg | toolkit `tools/recomp/lifter.py` |
+| 40 | (found on the way, with the conformance fuzzer now runnable here via gcc -m32) | Signed conditions after `add`/`sub` ignored overflow, and `sub`'s ordered ones were 32-bit only: 323 of 30,000 fuzz vectors wrong, now 0 | toolkit `lifter.py`, `tools/conformance` |
+| 41 | Dark triangle under Nevin's eye in close-ups; holes in meshes | `RECOMP_TRI_PROBE` on the mark's pixel: no face triangle covered it, only the eyeball behind (brown iris texture). `ARRAY_ELEMENT32` was unhandled, so every odd-sized indexed draw lost its last triangle -- here the lower eyelid's. Handled; the face matches the user's reference | toolkit `nv2a_pb_exec.c` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 
@@ -289,7 +292,6 @@ software rasteriser, which stays as the reference.
 - Audio plays at the right pitch now (fixes 27, 30, 31), still through the
   GP/EP stub: a stereo fold-down, no effects (reverb etc.). The DSP ack is a
   hand-entered address; the GP DSP needs real command handling for both.
-- The dark mark under Nevin's eye in cutscene close-ups (fix 32): not in the
-  face texture, not back faces, not NaN. Next suspects: the eye/eyelid
-  meshes' own textures and a second texture stage.
+- Check whether fix 41 also cleared the "pressure spot" black triangles and
+  the cutscene wedge holes (both look like missing last triangles).
 - Bink speckles.
