@@ -68,3 +68,7 @@ shader-cache/
 
 # Per-player settings (settings.example.ini is the template)
 settings.ini
+
+# Unpacked game files (setup.sh) and a local Python environment
+game-files/
+.venv/

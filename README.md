@@ -1,20 +1,67 @@
-# Alter Echo — static recompilation
+# Alter Echo for PC — static recompilation
 
-Alter Echo (Xbox, 2003, Title ID `0x5451000F`) recompiled to run on PC with
-[xboxrecomp](https://github.com/sp00nznet/xboxrecomp), built as a Windows `.exe`
-with MinGW and run on Linux under Wine + DXVK.
+Alter Echo (Outrage Games / THQ, Xbox, 2003) running natively on a PC: the
+game's own Xbox program translated to C and compiled, with the console's
+hardware -- graphics chip, sound, controller, kernel -- reimplemented by the
+[xboxrecomp](https://github.com/sp00nznet/xboxrecomp) toolkit. Not an
+emulator of the CPU: the game's code runs as ordinary PC code.
 
-The decision notes behind this (emulate vs port, measurements, pros and cons)
-are in `~/Games/Xbox/alter-echo-notes.md`.
+**No game files are included.** You need your own copy of the North American
+(NTSC) release, as a disc image or its extracted files. The build script
+checks it is that exact release.
+
+What works: the whole game as far as it has been played (the first missions
+start to finish), at a steady 60 fps, rendered at 2x the original resolution
+or more, fullscreen, with controller rumble and correct audio. Rendering runs
+on the GPU (Direct3D 11, through DXVK on Linux).
+
+## What you need
+
+- Linux with Wine and DXVK (the game is built as a Windows program; a native
+  Linux build is planned), or Windows (untested so far)
+- To build: python3, cmake, ninja, MinGW-w64 (`x86_64-w64-mingw32-gcc`), and
+  the xboxrecomp toolkit checked out next to this folder (`../xboxrecomp`)
+- 20-40 minutes for the first build and several GB of free RAM
+- A controller (Xbox 360 or compatible) or the keyboard
+
+## Build from your copy
+
+```bash
+./setup.sh "/path/to/Alter Echo (USA).iso"      # or the extracted game folder
+./run.sh
+```
+
+`setup.sh` checks your copy, unpacks it if it is a disc image, extracts the
+game's code modules, translates everything to C, compiles it and prepares the
+Wine prefix. `CHECK_ONLY=1 ./setup.sh <copy>` checks your copy and tools
+without building. The C code it generates comes from your copy; keep it to
+yourself.
 
 ## Playing
 
 `./run.sh` starts the game. Settings live in `settings.ini` (created from
-`settings.example.ini` on first run): resolution scale, fullscreen, rumble. While playing, **Alt+Enter** or **F11** toggles fullscreen; the
-picture keeps the console's 4:3 with black bars. An Xbox 360 pad works
-directly (with rumble); the keyboard works too -- arrows d-pad, Enter START,
+`settings.example.ini` on first run): resolution scale, fullscreen, rumble.
+While playing, **Alt+Enter** or **F11** toggles fullscreen; the picture
+keeps the console's 4:3 with black bars. An Xbox 360 pad works directly
+(with rumble); the keyboard works too -- arrows d-pad, Enter START,
 Z/X/A/S = A/B/X/Y, numpad 8/4/2/6 left stick, I/J/K/L right stick, 1/3
-triggers, Q/E white/black, Backspace BACK.
+triggers, Q/E white/black, Backspace BACK. Saves go where the console keeps
+them (`UDATA/` in the game folder).
+
+## Known limits
+
+- Played through the first missions; later levels may show problems not yet
+  seen. Logs are in `logs/`.
+- 60 fps is the cap, as on the console (the game is built around it).
+- The sound is the console's dry mix: the game uses no reverb or effects.
+
+---
+
+# Development notes
+
+The rest of this file is the working log of the port: what failed, how it
+was found and what fixed it. The decision notes behind the project
+(emulate vs port, measurements) are in `~/Games/Xbox/alter-echo-notes.md`.
 
 ## Layout
 
