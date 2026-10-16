@@ -10,8 +10,7 @@ are in `~/Games/Xbox/alter-echo-notes.md`.
 ## Playing
 
 `./run.sh` starts the game. Settings live in `settings.ini` (created from
-`settings.example.ini` on first run): resolution scale, fullscreen, rumble,
-reverb. While playing, **Alt+Enter** or **F11** toggles fullscreen; the
+`settings.example.ini` on first run): resolution scale, fullscreen, rumble. While playing, **Alt+Enter** or **F11** toggles fullscreen; the
 picture keeps the console's 4:3 with black bars. An Xbox 360 pad works
 directly (with rumble); the keyboard works too -- arrows d-pad, Enter START,
 Z/X/A/S = A/B/X/Y, numpad 8/4/2/6 left stick, I/J/K/L right stick, 1/3
@@ -307,7 +306,10 @@ software rasteriser, which stays as the reference.
 - Play further: movement and combat with a real controller
   (`RECOMP_USB=1` takes XInput input), the first checkpoints.
 - Audio plays at the right pitch now (fixes 27, 30, 31), still through the
-  GP/EP stub: a stereo fold-down, no effects (reverb etc.). The DSP ack is a
+  GP/EP stub: a stereo fold-down. No effects are missing that the title
+  uses: across every RECOMP_AUDIO_STATS window recorded (menus, both morph
+  forms in combat, videos) nothing reached mixbin 10 (I3DL2 reverb) or the
+  effect sends above it, so the console mixes it dry too. The DSP ack is a
   hand-entered address; the GP DSP needs real command handling for both.
 - Check whether fix 41 also cleared the "pressure spot" black triangles and
   the cutscene wedge holes (both look like missing last triangles).

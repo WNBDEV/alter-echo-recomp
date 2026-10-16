@@ -63,7 +63,9 @@ if [ -f "$SETTINGS" ]; then
             resolution_scale)      var=RECOMP_SCALE ;;
             fullscreen)            var=RECOMP_FULLSCREEN ;;
             rumble)                var=RECOMP_RUMBLE ;;
-            reverb)                var=RECOMP_REVERB ;;
+            reverb)                continue ;;   # see settings.example.ini history:
+                                                   # the game sends nothing to the
+                                                   # console's reverb, so it has none
             direct_render_targets) var=RECOMP_RT_DIRECT ;;
             *) echo "settings.ini: unknown setting '$key' (ignored)" >&2; continue ;;
         esac
