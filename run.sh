@@ -36,8 +36,12 @@ cd "$(dirname "$0")"
 # white/black, Backspace BACK. An XInput controller works as well.
 #   GPU          draw with the graphics card (Direct3D 11 via DXVK); 0 falls
 #                back to the software rasteriser
+#   HEAP_VFREE   video buffers the game frees go back to the heap. Without
+#                it every video leaked them, and some minutes into play a
+#                tutorial video found no memory and the game hung. (The full
+#                RECOMP_HEAP_RECLAIM stalls this game before its first frame.)
 for v in EXT_VMA AC97_READY USB KEYBOARD IRQL_LOCK PB_EXEC TITLE_KEVENTS \
-         VBLANK FB_WINDOW GPU; do
+         VBLANK FB_WINDOW GPU HEAP_VFREE; do
     eval ": \"\${RECOMP_$v:=1}\""
     export "RECOMP_$v"
 done
