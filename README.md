@@ -96,13 +96,12 @@ POSIX file layer, handle validation in the Win32 layer, guest functions named
 like libc ones (`close`, `write`) renamed by the lifter, and vkd3d-utils'
 ms_abi D3DCompile bridged to DXVK's calling convention.
 
-Open: after the fourth Bink video in a session the video's sound turns into a
-loud looping buzz (both builds). Contiguous memory is never reused (~4.5 MB
-per video), and the APU decides "RAM or contiguous window" for a physical
-address by the allocator's high-water mark, which then passes the sound
-buffer. RECOMP_CONTIG_FREE (reuse) fixes the buzz but the game then runs at
-20 fps; not on by default until that is understood. RECOMP_APU_VOICES traces
-voices, RECOMP_CONTIG_TRACE the arena, RECOMP_AUDIO_MUTE silences output.
+The buzz after the fourth Bink video (both builds) is fix 50. Still open
+natively: with RECOMP_CONTIG_FREE (contiguous reuse) this build runs at a flat
+20 fps from boot; the Wine build does not. RECOMP_APU_VOICES traces voices,
+RECOMP_APU_PHYS_STATS how the APU's reads are resolved, RECOMP_CONTIG_TRACE
+the arena, RECOMP_AUDIO_MUTE silences output. The native binary predates fixes
+49 and 50; `./setup-linux.sh` rebuilds it.
 
 ## Layout
 
@@ -226,6 +225,7 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 47 | Window only, and stretched when resized | Borderless fullscreen on Alt+Enter/F11 (`fullscreen = 1` in settings.ini starts that way); the swap chain follows the window and the frame is letterboxed at 4:3 | toolkit `fb_present.c`, `nv2a_gpu_d3d11.c` |
 | 48 | The Vibration option did nothing | XAPI's rumble output reports (a class SET_REPORT on the control pipe, in Alter Echo) were accepted and dropped; now decoded and passed to XInput (`rumble = 0` turns it off) | toolkit `ohci.c`, `usb_gamepad.c` |
 | 49 | Second mission (Surface: Arana, `L01_A2`): `[ICALL] Failed to resolve VA 0x74662750` on loading the area's save, then a NULL call from the main loop millions of times (19 Oct, a frozen frame); replayed from the same save, the "Disc Read Error" screen instead | A 9-way switch in `object_Buddies.dll` (`sub_74662570`, jump table at `0x74662B80`). The function list ended the method at the `ret` before its arms and took the `mov edi, edi` aligning the table for a function of its own, so each arm was translated as a separate entry -- except arm 2, which branches back to the shared epilogue and cannot run alone, and had no body. A weak entry under 4 bytes before a function's own table no longer bounds it: the method owns its arms as an inline switch. The same layout in `object_L09_A7_Miniboss.dll` (`sub_74DB7120`) is lifted the same way; no other function's code changed. Every indexed tail jump in the generated code now has a body for each arm. Same save before/after: old build fails as above, new build loads it and plays the fight that follows at 55-60 fps, no unresolved calls | toolkit `tools/recomp/translator.py`, `test_trailing_jump_tables.py` |
+| 50 | From the fourth Bink video in a session, the video's sound a loud looping buzz (both builds) | Physical P is both the RAM at guest VA P and the contiguous window's `0x80000000 + P`; on hardware one store, here two. The APU guessed which from the contiguous allocator, which leaks ~4.5 MB per video, and on the fourth play of the attract intro its high-water mark passed the Bink sound buffer -- heap memory -- so the APU read the sound from the window. But the title knows: on hardware the only way to get a RAM page's physical address is `MmGetPhysicalAddress`, so every RAM page a bus master sees went through it. It now remembers per page which store the VA was in, and the APU asks that before guessing. Idle at the title, 8 minutes, before/after: `RECOMP_APU_PHYS_STATS` (new) shows the title overriding the guess 0 times in plays 1-3 and on every Bink read from play 4 (10 M reads by play 5); the 4th play's sound matches the 1st to a median 0.03 dB (before: 0.92 dB, 28 s off by more than 1.5 dB). Same fps. `RECOMP_CONTIG_FREE` is no longer needed for this | toolkit `kernel_memory.c`, `xbox_memory_layout.c`, `apu_core.c`, `apu_vp.c` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 
