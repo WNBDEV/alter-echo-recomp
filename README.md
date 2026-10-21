@@ -3,8 +3,10 @@
 Alter Echo (Outrage Games / THQ, Xbox, 2003) running natively on a PC: the
 game's own Xbox program translated to C and compiled, with the console's
 hardware -- graphics chip, sound, controller, kernel -- reimplemented by the
-[xboxrecomp](https://github.com/sp00nznet/xboxrecomp) toolkit. Not an
-emulator of the CPU: the game's code runs as ordinary PC code.
+[xboxrecomp](https://github.com/sp00nznet/xboxrecomp) toolkit (this project
+uses [a fork of it](https://github.com/FILL-IN/xboxrecomp) carrying its GPU
+backend and fixes). Not an emulator of the CPU: the game's code runs as
+ordinary PC code.
 
 **No game files are included.** You need your own copy of the North American
 (NTSC) release, as a disc image or its extracted files. The build script
@@ -19,8 +21,10 @@ on the GPU (Direct3D 11, through DXVK on Linux).
 
 - Linux with Wine and DXVK (the game is built as a Windows program; a native
   Linux build is in progress, below), or Windows (untested so far)
-- To build: python3, cmake, ninja, MinGW-w64 (`x86_64-w64-mingw32-gcc`), and
-  the xboxrecomp toolkit checked out next to this folder (`../xboxrecomp`)
+- To build: python3, cmake, ninja, git and MinGW-w64
+  (`x86_64-w64-mingw32-gcc`). `setup.sh` fetches the toolkit next to this
+  folder (`../xboxrecomp`) at the version this project needs, or checks the
+  one already there
 - 20-40 minutes for the first build and several GB of free RAM
 - A controller (Xbox 360 or compatible) or the keyboard
 

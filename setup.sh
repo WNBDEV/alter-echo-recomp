@@ -10,15 +10,24 @@
 # C on this machine, compiles that, and sets up the Wine prefix run.sh uses.
 # Afterwards: ./run.sh
 #
-# Needs: python3, cmake, ninja, x86_64-w64-mingw32-gcc (MinGW-w64), wine and
-# DXVK (setup_dxvk, or the dxvk package), and the xboxrecomp toolkit checked
-# out next to this folder (../xboxrecomp) or named by XBOXRECOMP=. Expect
-# 20-40 minutes and several GB of RAM (JOBS=2 ./setup.sh is faster if you have the memory).
+# Needs: python3, cmake, ninja, x86_64-w64-mingw32-gcc (MinGW-w64), git, wine
+# and DXVK (setup_dxvk, or the dxvk package). The xboxrecomp toolkit is
+# fetched next to this folder (../xboxrecomp) if it is not there already, or
+# XBOXRECOMP= names another checkout. Expect 20-40 minutes and several GB of
+# RAM (JOBS=2 ./setup.sh is faster if you have the memory).
 set -euo pipefail
 
 cd "$(dirname "$0")"
 P="$(pwd)"
 T="${XBOXRECOMP:-$P/../xboxrecomp}"
+
+# The toolkit this project is built against: upstream xboxrecomp plus the
+# work done for this game (the Direct3D 11 backend, the fixes in the README's
+# table), on the fork's gpu-backend branch. Upstream alone does not build it.
+# An existing checkout is never changed, only checked: it must contain this
+# commit (a later one on the same branch is fine).
+TOOLKIT_URL="${TOOLKIT_URL:-https://github.com/FILL-IN/xboxrecomp.git}"
+TOOLKIT_COMMIT="78d939fdf5eed5470266bf4e5c35b6b0ed2da91f"
 
 say()  { printf '\n== %s\n' "$*"; }
 fail() { printf '\nsetup: %s\n' "$*" >&2; exit 1; }
@@ -35,13 +44,29 @@ SRC="$1"
 # ---- tools ----------------------------------------------------------------
 say "Checking tools"
 missing=()
-for t in python3 cmake ninja x86_64-w64-mingw32-gcc wine; do
+for t in python3 cmake ninja x86_64-w64-mingw32-gcc git wine; do
     command -v "$t" >/dev/null || missing+=("$t")
 done
 [ ${#missing[@]} -eq 0 ] || fail "missing: ${missing[*]} (install them with your package manager)"
-[ -d "$T/tools/recomp" ] || fail "the xboxrecomp toolkit is not at $T (clone it there, or set XBOXRECOMP=)"
-grep -q nv2a_gpu_present "$T/src/kernel/nv2a_gpu_d3d11.c" 2>/dev/null \
-    || fail "the toolkit at $T is too old for this project (it lacks the GPU presenter)"
+
+if [ ! -e "$T" ]; then
+    say "Fetching the xboxrecomp toolkit into $T"
+    case "$TOOLKIT_URL" in *FILL-IN*)
+        fail "this copy of setup.sh has no toolkit URL yet: clone the toolkit to $T yourself (or set TOOLKIT_URL=)" ;;
+    esac
+    git clone --quiet "$TOOLKIT_URL" "$T" || fail "could not clone $TOOLKIT_URL"
+    git -C "$T" checkout --quiet "$TOOLKIT_COMMIT" \
+        || fail "$TOOLKIT_URL has no commit $TOOLKIT_COMMIT"
+fi
+[ -d "$T/tools/recomp" ] || fail "$T is not the xboxrecomp toolkit (set XBOXRECOMP= to the right folder)"
+if [ -d "$T/.git" ]; then
+    git -C "$T" merge-base --is-ancestor "$TOOLKIT_COMMIT" HEAD 2>/dev/null \
+        || fail "the toolkit at $T does not contain $TOOLKIT_COMMIT, the version this project needs. Update it: git -C \"$T\" fetch && git -C \"$T\" checkout $TOOLKIT_COMMIT"
+else
+    # A copy without its history (an unpacked archive): the next best check.
+    grep -q xbox_PhysicalOrigin "$T/src/kernel/xbox_memory_layout.c" 2>/dev/null \
+        || fail "the toolkit at $T is too old for this project"
+fi
 
 # Python with capstone, which the disassembler needs.
 PY="${PY:-}"
