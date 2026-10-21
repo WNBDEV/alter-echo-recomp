@@ -46,7 +46,9 @@ yourself.
 `./run.sh` starts the game. Settings live in `settings.ini` (created from
 `settings.example.ini` on first run): resolution scale, fullscreen, rumble.
 While playing, **Alt+Enter** or **F11** toggles fullscreen; the picture
-keeps the console's 4:3 with black bars. An Xbox 360 pad works directly
+keeps the console's 4:3 with black bars. **Alt+F4** or the window's close
+button closes the program (the pause menu's Quit only leaves the level);
+save first. An Xbox 360 pad works directly
 (with rumble); the keyboard works too -- arrows d-pad, Enter START,
 Z/X/A/S = A/B/X/Y, numpad 8/4/2/6 left stick, I/J/K/L right stick, 1/3
 triggers, Q/E white/black, Backspace BACK. Saves go where the console keeps
