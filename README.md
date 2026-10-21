@@ -52,6 +52,9 @@ Z/X/A/S = A/B/X/Y, numpad 8/4/2/6 left stick, I/J/K/L right stick, 1/3
 triggers, Q/E white/black, Backspace BACK. Saves go where the console keeps
 them (`UDATA/` in the game folder).
 
+In the game's Options and pause menus, settings with choices (Vibration,
+**Pitch Axis** for the camera's up/down) change with **left/right**, not A.
+
 ## Native Linux build (experimental)
 
 The same game compiled as a Linux program -- no Wine. It needs the C code
@@ -79,6 +82,10 @@ way to play.
   seen. Logs are in `logs/`.
 - 60 fps is the cap, as on the console (the game is built around it).
 - The sound is the console's dry mix: the game uses no reverb or effects.
+- Close-ups in the in-engine cutscenes look soft at 2x: edges are rendered
+  at full resolution, but the textures are the original ones, made for a
+  480i TV, and the cutscene camera magnifies them. That is the game's own
+  art, not a rendering fault.
 
 ---
 
