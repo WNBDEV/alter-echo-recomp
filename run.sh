@@ -11,9 +11,14 @@ set -euo pipefail
 
 # Claude Code runs as root on this machine; re-run as the project's owner so
 # the Wine prefix and logs stay theirs, keeping the display so a window can open.
+# XDG_RUNTIME_DIR points at the owner's session: without it Wine cannot reach
+# PipeWire, falls back to raw ALSA, and takes the speakers from the desktop
+# for as long as the game runs.
 if [ "$(id -u)" -eq 0 ]; then
-    exec sudo -u "$(stat -c %U "$0")" -H \
-        --preserve-env=DISPLAY,XAUTHORITY,WAYLAND_DISPLAY,WINEDEBUG "$0" "$@"
+    owner="$(stat -c %U "$0")"
+    exec sudo -u "$owner" -H \
+        --preserve-env=DISPLAY,XAUTHORITY,WAYLAND_DISPLAY,WINEDEBUG \
+        XDG_RUNTIME_DIR="/run/user/$(id -u "$owner")" "$0" "$@"
 fi
 
 cd "$(dirname "$0")"

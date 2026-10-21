@@ -11,9 +11,14 @@
 # when they are not.
 set -euo pipefail
 
+# As root (Claude Code), run as the owner, in the owner's session: root has
+# no XDG_RUNTIME_DIR to pass on, and without it SDL cannot reach PipeWire and
+# opens the sound card itself, taking the speakers from the desktop.
 if [ "$(id -u)" -eq 0 ]; then
-    exec sudo -u "$(stat -c %U "$0")" -H \
-        --preserve-env=DISPLAY,XAUTHORITY,WAYLAND_DISPLAY,XDG_RUNTIME_DIR,PULSE_SERVER "$0" "$@"
+    owner="$(stat -c %U "$0")"
+    exec sudo -u "$owner" -H \
+        --preserve-env=DISPLAY,XAUTHORITY,WAYLAND_DISPLAY,PULSE_SERVER \
+        XDG_RUNTIME_DIR="/run/user/$(id -u "$owner")" "$0" "$@"
 fi
 
 cd "$(dirname "$0")"
