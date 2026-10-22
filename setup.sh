@@ -27,7 +27,7 @@ T="${XBOXRECOMP:-$P/../xboxrecomp}"
 # An existing checkout is never changed, only checked: it must contain this
 # commit (a later one on the same branch is fine).
 TOOLKIT_URL="${TOOLKIT_URL:-https://github.com/FILL-IN/xboxrecomp.git}"
-TOOLKIT_COMMIT="91535d4ed45247af7436197d3332b6ebd520e80f"
+TOOLKIT_COMMIT="f6e6e2b1191cb4cadc7da67ccf1b7763119c09a3"
 
 say()  { printf '\n== %s\n' "$*"; }
 fail() { printf '\nsetup: %s\n' "$*" >&2; exit 1; }
