@@ -118,6 +118,20 @@ RECOMP_APU_PHYS_STATS how the APU's reads are resolved, RECOMP_CONTIG_TRACE
 the arena, RECOMP_AUDIO_MUTE silences output. The native binary predates fixes
 49 and 50; `./setup-linux.sh` rebuilds it.
 
+## Memory over a session (22 Oct 2026)
+
+Will a whole playthrough fit? The runtime returns only some freed memory (the
+full RECOMP_HEAP_RECLAIM stalls boot), so this was measured: 14 level loads
+in two sessions, alternating Surface: Arana (`L01_A2`) and Surface: Master
+(`L01_MASTER`) through the pause menu's Quit, with RECOMP_HEAP_STATS and
+RECOMP_CONTIG_TRACE. The heap grows on first visits (30.4 MB at boot, 32.8 MB
+after the first level) and then stays put to the kilobyte through every later
+load, ~23 MB never touched at the top of its 55.8 MB. Contiguous memory
+(textures, video, sound) reaches 20.1 MB by the seventh load and stays there:
+each load allocates ~700 blocks and frees them on leaving (fix 51 reuses
+them), ~44 MB of the 64 MB window spare. No leak in either; a later level
+would have to need far more than the console itself has to run out.
+
 ## Layout
 
 | Path | What |
