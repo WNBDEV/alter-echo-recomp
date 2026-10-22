@@ -44,7 +44,9 @@ yourself.
 ## Playing
 
 `./run.sh` starts the game. Settings live in `settings.ini` (created from
-`settings.example.ini` on first run): resolution scale, fullscreen, rumble.
+`settings.example.ini` on first run): resolution scale, fullscreen, texture
+filtering (mipmaps and 16x anisotropic by default), sharpening (off by
+default; 0.3-0.5 crisps up the 480i-era textures at 2x), rumble.
 While playing, **Alt+Enter** or **F11** toggles fullscreen; the picture
 keeps the console's 4:3 with black bars. **Alt+F4** or the window's close
 button closes the program (the pause menu's Quit only leaves the level);
@@ -87,7 +89,7 @@ way to play.
 - Close-ups in the in-engine cutscenes look soft at 2x: edges are rendered
   at full resolution, but the textures are the original ones, made for a
   480i TV, and the cutscene camera magnifies them. That is the game's own
-  art, not a rendering fault.
+  art, not a rendering fault; `sharpen = 0.3` or so in settings.ini helps.
 
 ---
 

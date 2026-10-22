@@ -72,6 +72,8 @@ if [ -f "$SETTINGS" ]; then
                                                    # the game sends nothing to the
                                                    # console's reverb, so it has none
             direct_render_targets) var=RECOMP_RT_DIRECT ;;
+            texture_filtering)     var=RECOMP_TEXFILTER ;;
+            sharpen)               var=RECOMP_SHARPEN ;;
             *) echo "settings.ini: unknown setting '$key' (ignored)" >&2; continue ;;
         esac
         [ -n "${!var:-}" ] || export "$var=$val"
