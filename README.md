@@ -195,8 +195,11 @@ vtables in them are never scanned. That lost ~430–590 real functions. DOLBY is
 left out on purpose: it's code for the sound chip's DSP, not the x86 CPU.
 (Only the first of the four `BINKYUY2` sections is picked up by name.)
 
-The Ghidra export that `merge_names.py` reads is cached in
-`tools/ghidra_naming/export/`. To redo it: the toolkit's `run_ghidra.sh` is
+The names `merge_names.py` applies come from `tools/ghidra_names.json` in this
+project (`--names-json`, as `tools/regen_modules.sh` runs it): the 196 MSVC
+runtime routines Ghidra recognised, merged from its export once. The export
+itself (`tools/ghidra_naming/export/` in the toolkit) is local and not in git,
+so a fresh checkout has none. To redo it: the toolkit's `run_ghidra.sh` is
 Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 
 ## Pipeline results (14 Oct 2026)

@@ -47,7 +47,11 @@ cd "$T"
     --seed-functions "$P/build-modules/all_seeds.json" > "$L/step3_disasm.log" 2>&1
 "$PY" -m tools.func_id "$X" -v > "$L/step4_func_id.log" 2>&1
 "$PY" -m tools.abi_analysis "$X" -v > "$L/step4.5_abi.log" 2>&1
-"$PY" tools/ghidra_naming/merge_names.py --apply > "$L/step4.6_merge.log" 2>&1
+# Names from the project's own map (tools/ghidra_names.json: the 196 MSVC
+# runtime routines Ghidra recognised), not the toolkit's Ghidra export, which
+# is local to the machine that ran Ghidra -- a fresh checkout has none.
+"$PY" tools/ghidra_naming/merge_names.py --apply \
+    --names-json "$P/tools/ghidra_names.json" > "$L/step4.6_merge.log" 2>&1
 rm -f "$P"/src/recomp/gen/recomp_*.c
 "$PY" -m tools.recomp "$X" --all --split 250 --gen-dir "$P/src/recomp/gen" \
     --exclude-manual "$P/src/module_loader.c" \
