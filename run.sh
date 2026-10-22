@@ -50,7 +50,8 @@ cd "$(dirname "$0")"
 #                Each full-screen video leaked ~4 MB of the 64 MB window, so
 #                about a dozen in a session would have used it up; with it
 #                the window stays flat (17.7 MB after five attract plays, 35
-#                without). Not in run-linux.sh: natively it runs at 20 fps.
+#                without). The "20 fps natively" once blamed on it was
+#                Wayland throttling a window that was not on screen.
 for v in EXT_VMA AC97_READY USB KEYBOARD IRQL_LOCK PB_EXEC TITLE_KEVENTS \
          VBLANK FB_WINDOW GPU HEAP_VFREE CONTIG_FREE; do
     eval ": \"\${RECOMP_$v:=1}\""

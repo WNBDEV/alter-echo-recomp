@@ -111,12 +111,24 @@ POSIX file layer, handle validation in the Win32 layer, guest functions named
 like libc ones (`close`, `write`) renamed by the lifter, and vkd3d-utils'
 ms_abi D3DCompile bridged to DXVK's calling convention.
 
-The buzz after the fourth Bink video (both builds) is fix 50. Still open
-natively: with RECOMP_CONTIG_FREE (contiguous reuse) this build runs at a flat
-20 fps from boot; the Wine build does not. RECOMP_APU_VOICES traces voices,
-RECOMP_APU_PHYS_STATS how the APU's reads are resolved, RECOMP_CONTIG_TRACE
-the arena, RECOMP_AUDIO_MUTE silences output. The native binary predates fixes
-49 and 50; `./setup-linux.sh` rebuilds it.
+The buzz after the fourth Bink video (both builds) is fix 50.
+RECOMP_APU_VOICES traces voices, RECOMP_APU_PHYS_STATS how the APU's reads
+are resolved, RECOMP_CONTIG_TRACE the arena, RECOMP_AUDIO_MUTE silences output.
+
+**Update, 22 Oct.** Rebuilt with everything through fix 53, it plays a new
+game through the opening cutscene into the first room at 60 fps, sound
+through SDL (PipeWire), no unresolved calls; RECOMP_CONTIG_FREE is now on
+here too. The "flat 20 fps with RECOMP_CONTIG_FREE" was not the reuse: a
+window Wayland considers hidden (a test run behind other windows) has its
+presents throttled to ~20 fps, reuse or not; with the window visible, or
+SDL_VIDEODRIVER=x11, it is 60 either way. Still open natively:
+- No swap chain: `xbox_FramebufferWindowHwnd` has no HWND for the SDL
+  window, so `nv2a_gpu_present` declines and every frame is read back and
+  shown through guest memory -- the picture is 640x480 however high
+  RECOMP_SCALE renders, and RECOMP_GPU_SHOT has nothing to shoot. DXVK
+  Native can take the SDL window for a swap chain; that hook is the work.
+- SIGTERM does not stop it (`timeout`, `kill` without -9); closing the
+  window does.
 
 ## Memory over a session (22 Oct 2026)
 
@@ -257,6 +269,7 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 50 | From the fourth Bink video in a session, the video's sound a loud looping buzz (both builds) | Physical P is both the RAM at guest VA P and the contiguous window's `0x80000000 + P`; on hardware one store, here two. The APU guessed which from the contiguous allocator, which leaks ~4.5 MB per video, and on the fourth play of the attract intro its high-water mark passed the Bink sound buffer -- heap memory -- so the APU read the sound from the window. But the title knows: on hardware the only way to get a RAM page's physical address is `MmGetPhysicalAddress`, so every RAM page a bus master sees went through it. It now remembers per page which store the VA was in, and the APU asks that before guessing. Idle at the title, 8 minutes, before/after: `RECOMP_APU_PHYS_STATS` (new) shows the title overriding the guess 0 times in plays 1-3 and on every Bink read from play 4 (10 M reads by play 5); the 4th play's sound matches the 1st to a median 0.03 dB (before: 0.92 dB, 28 s off by more than 1.5 dB). Same fps. `RECOMP_CONTIG_FREE` is no longer needed for this | toolkit `kernel_memory.c`, `xbox_memory_layout.c`, `apu_core.c`, `apu_vp.c` |
 | 51 | (found with fix 50) Contiguous memory only ever grew: ~4 MB per full-screen video, 15.2 MB at boot and 35 MB after five attract plays, so about a dozen videos in a session would have used up the 64 MB window | `RECOMP_CONTIG_FREE` (freed contiguous blocks are reused) is now a `run.sh` default: the same idle run stays at 17.7 MB from the second play on, 60 fps at the title and 29-30 in videos as before, the sound unchanged. Loading the Surface: Arana save and fighting in it: 50-57 fps (40-60 without), no unresolved calls. The 20 fps it gave was the native build only; `run-linux.sh` leaves it off | `run.sh` |
 | 52 | (proactive) DirectSound's start-up waited on a DSP command word that `run.sh` completed at a hand-entered address, `RECOMP_DSP_ACK=0x808A8810` -- right for this boot's allocation layout and nothing else; any change in where contiguous memory lands (fix 51 reuses it) could have moved it and hung sound setup | The word is byte 0x810 of the GP DSP's scratch memory, whose pages are listed in the scatter-gather table at the APU's `GPSADDR` register; the toolkit now completes the table's first page + 0x810 every APU frame. It derives 0x008A8810 -- the hard-coded address -- and with the address gone from `run.sh` the game boots, completes command 3, loads a level with sound, audio levels as before | toolkit `apu_dsp.c`; `run.sh`, `run-linux.sh` |
+| 53 | (user report, a regression from fix 51) In the Surface: Arana level intro ("I need to find Arana...") Nevin had nothing above the neck, for the whole shot -- with or without mipmaps or GPU vertex programs, fine with `RECOMP_CONTIG_FREE=0` | The GPU backend knows surfaces by guest address and was never told memory was freed: once freed contiguous blocks were reused, a render target it still held over a freed block either stood in for the new data there or was read back over it -- here the talking head's. `MmFreeContiguousMemory` now queues the range and the GPU thread drops what overlaps it, without a readback (the title's Direct3D waits for the GPU before freeing), before its next command. Same restore before/after: no head, then the head, the log saying "dropped 1 surface(s) over memory the title freed". Found with GPU shots taken only while a trigger file exists (`RECOMP_GPU_SHOT_TRIGGER`, new). Also from this round: mip levels are now the game's own, decoded, not generated (they match to a mean 0.13 levels) | toolkit `nv2a_gpu_d3d11.c`, `xbox_memory_layout.c`, `nv2a_pb_exec.c` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 

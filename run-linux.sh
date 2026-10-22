@@ -46,8 +46,12 @@ cd "$(dirname "$0")"
 #                it every video leaked them, and some minutes into play a
 #                tutorial video found no memory and the game hung. (The full
 #                RECOMP_HEAP_RECLAIM stalls this game before its first frame.)
+#   CONTIG_FREE  freed contiguous blocks are reused (see run.sh). 60 fps
+#                here too; a window Wayland considers hidden is throttled
+#                to ~20 whatever this is, so test with it visible (or
+#                SDL_VIDEODRIVER=x11).
 for v in EXT_VMA AC97_READY USB KEYBOARD IRQL_LOCK PB_EXEC TITLE_KEVENTS \
-         VBLANK FB_WINDOW GPU HEAP_VFREE; do
+         VBLANK FB_WINDOW GPU HEAP_VFREE CONTIG_FREE; do
     eval ": \"\${RECOMP_$v:=1}\""
     export "RECOMP_$v"
 done
