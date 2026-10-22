@@ -406,18 +406,21 @@ software rasteriser, which stays as the reference.
   D3D11 backend in the toolkit (`src/nv2a/nv2a_pgraph_d3d11.c`) only
   translates another title's 2D menu, so a hardware path is a project of its
   own; profiling and tightening the per-pixel path is the near-term option.
-- Holes: a few wedge-shaped gaps in one cutscene shot and a sliver on the
-  first stairs, where no draw reaches the pixel in some frames (fix 29 has
-  the probes). Not clipping precision (a guard band was tried and changed
-  nothing). Occlusion-query results (zpass reports) are the next suspect.
+- ~~Holes: a few wedge-shaped gaps in one cutscene shot and a sliver on the
+  first stairs.~~ Gone (22 Oct, after fixes 41 and 46): `RECOMP_DEBUG_HOLES`,
+  now working on the GPU backend too, finds no undrawn pixel in any sampled
+  frame of the new game's opening cutscene or the first room's stairs (every
+  30th frame, GPU shots at 2x). Only the loading transition leaves the
+  outermost pixel row and column undrawn, on a black screen.
 - Play further: movement and combat with a real controller
   (`RECOMP_USB=1` takes XInput input), the first checkpoints.
 - Audio plays at the right pitch now (fixes 27, 30, 31), still through the
   GP/EP stub: a stereo fold-down. No effects are missing that the title
   uses: across every RECOMP_AUDIO_STATS window recorded (menus, both morph
   forms in combat, videos) nothing reached mixbin 10 (I3DL2 reverb) or the
-  effect sends above it, so the console mixes it dry too. The DSP ack is a
-  hand-entered address; the GP DSP needs real command handling for both.
-- Check whether fix 41 also cleared the "pressure spot" black triangles and
-  the cutscene wedge holes (both look like missing last triangles).
-- Bink speckles.
+  effect sends above it, so the console mixes it dry too. ~~The DSP ack is a
+  hand-entered address~~ (fix 52 derives it); real command handling would
+  still need the GP DSP emulated.
+- ~~Check whether fix 41 also cleared the "pressure spot" black triangles and
+  the cutscene wedge holes~~ -- the wedge holes are gone (above).
+- ~~Bink speckles.~~ Fix 39: the intro matches ffmpeg's decode.
