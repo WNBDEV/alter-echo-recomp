@@ -59,6 +59,23 @@ them (`UDATA/` in the game folder).
 In the game's Options and pause menus, settings with choices (Vibration,
 **Pitch Axis** for the camera's up/down) change with **left/right**, not A.
 
+### Starting at any level
+
+The game kept its developers' command line, and `RECOMP_ARGS` hands it one:
+
+```bash
+RECOMP_ARGS="L05_A1 -bypass" ./run.sh    # straight into L05_A1, no menus
+```
+
+The names are the area files in `ODB Data/ODB MEDIA/clf` (`L00_A1` to
+`L09_A9`). Without `-bypass` the game starts normally and the menu's Start
+Game goes to the named area instead of the first one. The game's other
+switches pass through too (`-nomovies`, `-noai`, `-allowskip`, ...; the list
+is in `src/game_args.c`). It's a test tool: an area started this way has none
+of the progress a real playthrough would have carried into it.
+`tools/level_sweep.sh` uses it to boot every area in turn and report how each
+one does.
+
 ## Native Linux build (experimental)
 
 The same game compiled as a Linux program -- no Wine. It needs the C code
@@ -82,8 +99,12 @@ way to play.
 
 ## Known limits
 
-- Played through the first missions; later levels may show problems not yet
-  seen. Logs are in `logs/`.
+- Played through the first missions. Every later area boots and looks
+  right in a screenshot when started directly (see "Every level, booted" below), but none
+  has been played through: scripted events, boss fights and saving there are
+  untested. Logs are in `logs/`.
+- Some later areas run below 60 fps: 36-44 in L07_A2a, L06_A2, L08_A2 and
+  L02_A4, on an i7-4790K with a GTX 960; the ending dips in places.
 - 60 fps is the cap, as on the console (the game is built around it).
 - The sound is the console's dry mix: the game uses no reverb or effects.
 - Close-ups in the in-engine cutscenes look soft at 2x: edges are rendered
@@ -143,6 +164,31 @@ load, ~23 MB never touched at the top of its 55.8 MB. Contiguous memory
 each load allocates ~700 blocks and frees them on leaving (fix 51 reuses
 them), ~44 MB of the 64 MB window spare. No leak in either; a later level
 would have to need far more than the console itself has to run out.
+
+## Every level, booted (22 Oct 2026)
+
+Only L00 and L01 (7 of the 51 area files) had ever been loaded. The game
+still parses a development command line (sub_000164F0: a level name and
+nineteen -switches, into the settings block at 0x1E7B68), but the retail
+build calls it with argc = 1. `src/game_args.c` wraps it and passes
+RECOMP_ARGS as the argv it never got, built on the guest stack; the boot path
+(sub_0001FDE0, with -bypass) and the menu's Start Game (sub_000B56B0) then
+start the named area instead of L00_A1. Both were tried.
+
+`tools/level_sweep.sh` booted each of the 51 areas with -bypass and watched
+it for 40 s. All 51 loaded in about 2 s and were still running when stopped:
+no crashes, no [ICALL] misses, no instruction outside the five every run
+reaches, no new GPU methods. The frames (one per area, console-sized) show each drawn as expected:
+the late areas' enemies and bosses, their cutscenes with subtitles, the
+ending (L09_A9). The `_Master` files all open on the same corridor: they
+hold shared content, not a place to play. Left idle, Nevin died in L09_A5.
+
+Not all of them hold 60 fps (i7-4790K, GTX 960, 2x). Run again with the
+shader cache warm, four stay low throughout: L07_A2a 37, L06_A2 38, L08_A2
+42, L02_A4 44; the ending (L09_A9) dips to 37 in places. The first sweep also
+had L02_A2, L04_A6, L05_A1, L06_A9, L08_A3, L08_A4, L08_A6a, L09_A2main and
+L09_A8 at 46-54, but L06_A9 held 60 on a second visit, so part of that was
+first-visit shader compiling. Not investigated yet.
 
 ## Layout
 

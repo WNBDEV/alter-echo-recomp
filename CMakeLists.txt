@@ -57,6 +57,8 @@ set(GAME_SOURCES
     src/module_loader.c
     src/module_layout.c
     src/module_thunks.c
+    # RECOMP_ARGS: the game's development command line (level warp, -bypass).
+    src/game_args.c
     # Add game-specific sources here, e.g.:
     # src/asset_loader.c
     # src/custom_renderer.c

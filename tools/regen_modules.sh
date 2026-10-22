@@ -9,10 +9,11 @@
 #                                 tools/extract_modules.py)
 #   2. the usual pipeline on that XBE, with the module sections as extra code
 #      sections and the engine + module seeds merged
-#   3. tools.recomp with --exclude-manual src/module_loader.c, so the loader
-#      it wraps (sub_0011D860) is emitted as sub_0011D860_gen, and
-#      --manual-functions for the modules' import thunk slots, which
-#      src/module_thunks.c defines
+#   3. tools.recomp with --exclude-manual on src/module_loader.c and
+#      src/game_args.c (joined: it takes one file), so the functions they
+#      wrap (sub_0011D860, the module loader; sub_000164F0, the command-line
+#      parser) are emitted as sub_X_gen, and --manual-functions for the
+#      modules' import thunk slots, which src/module_thunks.c defines
 set -euo pipefail
 
 P="$(cd "$(dirname "$0")/.." && pwd)"
@@ -53,8 +54,9 @@ cd "$T"
 "$PY" tools/ghidra_naming/merge_names.py --apply \
     --names-json "$P/tools/ghidra_names.json" > "$L/step4.6_merge.log" 2>&1
 rm -f "$P"/src/recomp/gen/recomp_*.c
+cat "$P/src/module_loader.c" "$P/src/game_args.c" > "$P/build-modules/manual_wraps.c"
 "$PY" -m tools.recomp "$X" --all --split 250 --gen-dir "$P/src/recomp/gen" \
-    --exclude-manual "$P/src/module_loader.c" \
+    --exclude-manual "$P/build-modules/manual_wraps.c" \
     --manual-functions "$P/build-modules/thunk_functions.json" > "$L/step5_recomp.log" 2>&1
 
 grep -E 'Total functions' "$L/step3_disasm.log" || true
