@@ -27,7 +27,8 @@ cd "$(dirname "$0")"
 # (any of them can be overridden from the environment, 0 to turn one off):
 #   EXT_VMA      address space for the runtime-loaded game modules
 #   AC97_READY   audio hardware present (DirectSound initialises)
-#   DSP_ACK      stand-in for the audio DSP's command acknowledgement
+#   (the audio DSP's command word is completed by the toolkit, found from
+#   the APU's registers; RECOMP_DSP_ACK=<addr> is no longer needed)
 #   USB          the controller arrives over the emulated USB port
 #   KEYBOARD     the framebuffer window's keys drive pad 1 (see below)
 #   IRQL_LOCK    DPCs and the game thread do not race (controller setup)
@@ -55,7 +56,6 @@ for v in EXT_VMA AC97_READY USB KEYBOARD IRQL_LOCK PB_EXEC TITLE_KEVENTS \
     eval ": \"\${RECOMP_$v:=1}\""
     export "RECOMP_$v"
 done
-export RECOMP_DSP_ACK="${RECOMP_DSP_ACK:-0x808A8810}"
 
 # settings.ini (from settings.example.ini on first run): friendly names for
 # the switches below. The environment wins over the file, the file over the
