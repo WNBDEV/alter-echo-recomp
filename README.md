@@ -26,7 +26,7 @@ on the GPU (Direct3D 11, through DXVK on Linux).
   folder (`../xboxrecomp`) at the version this project needs, or checks the
   one already there
 - 20-40 minutes for the first build and several GB of free RAM
-- A controller (Xbox 360 or compatible) or the keyboard
+- A controller (Xbox 360 or compatible), or a keyboard and mouse
 
 ## Build from your copy
 
@@ -46,18 +46,51 @@ yourself.
 `./run.sh` starts the game. Settings live in `settings.ini` (created from
 `settings.example.ini` on first run): resolution scale, fullscreen, texture
 filtering (mipmaps and 16x anisotropic by default), sharpening (off by
-default; 0.3-0.5 crisps up the 480i-era textures at 2x), rumble.
+default; 0.3-0.5 crisps up the 480i-era textures at 2x), rumble, and the
+keyboard and mouse (below).
 While playing, **Alt+Enter** or **F11** toggles fullscreen; the picture
-keeps the console's 4:3 with black bars. **Alt+F4** or the window's close
-button closes the program (the pause menu's Quit only leaves the level);
-save first. An Xbox 360 pad works directly
-(with rumble); the keyboard works too -- arrows d-pad, Enter START,
-Z/X/A/S = A/B/X/Y, numpad 8/4/2/6 left stick, I/J/K/L right stick, 1/3
-triggers, Q/E white/black, Backspace BACK. Saves go where the console keeps
-them (`UDATA/` in the game folder).
+keeps the console's 4:3 with black bars. **F1** shows or hides a frame
+counter in the corner. **Alt+F4** or the window's close button closes the
+program (the pause menu's Quit only leaves the level); save first. Saves go
+where the console keeps them (`UDATA/` in the game folder).
 
-In the game's Options and pause menus, settings with choices (Vibration,
-**Pitch Axis** for the camera's up/down) change with **left/right**, not A.
+### Controls
+
+An Xbox 360 pad works directly, with rumble. The keyboard and mouse work at
+the same time as a pad (`input = auto`); `input = controller` or
+`input = keyboard` in `settings.ini` picks one. **Click in the window** to
+use the mouse (the pointer hides and stays inside); **Alt+Tab** lets go of
+it.
+
+| Key | Pad | In Alter Echo |
+|---|---|---|
+| W A S D | left stick | move |
+| mouse (or I J K L) | right stick | camera |
+| Space | A | jump; select in menus |
+| left click | X | attack |
+| right click | Y | jump attack in the air, grenade |
+| F | B | gun smash, roll attack; cancel in menus |
+| Shift | left stick click | block while held; Shift+Space rolls |
+| C | White | block |
+| Q / E | left / right trigger | morph to gun / sword form |
+| mouse wheel, Tab | Black | next gun |
+| middle click, R | right stick click | |
+| Enter, Escape | START | pause; "Done" in the Options menu |
+| Backspace | BACK | |
+| arrow keys | d-pad | menus |
+
+The game's own prompts show pad buttons: (A) is Space, (B) is F, START is
+Enter or Escape. In the Options menu, B leaves without keeping changes;
+START keeps them. Settings with choices (Vibration, **Pitch Axis** for the
+camera's up/down) change with **left/right**, not A.
+
+Every key can be changed in `settings.ini` (`bind_a = Space`, several keys
+with commas, `none` for no key; the list of key names is there), and so can
+the mouse: `mouse_sensitivity` (0 turns mouse look off), `mouse_invert_y`,
+and `mouse_deadzone`. The mouse moves the camera by tilting the right stick,
+as far as its speed asks; the game ignores the stick's first 40%, and the
+mouse starts just past that, so small movements still turn. A very fast
+flick turns no faster than the stick pushed all the way.
 
 ### Starting at any level
 
@@ -72,7 +105,10 @@ The names are the area files in `ODB Data/ODB MEDIA/clf` (`L00_A1` to
 Game goes to the named area instead of the first one. The game's other
 switches pass through too (`-nomovies`, `-noai`, `-allowskip`, ...; the list
 is in `src/game_args.c`). It's a test tool: an area started this way has none
-of the progress a real playthrough would have carried into it.
+of the progress a real playthrough would have carried into it, and Nevin
+may not take control there (L02_A1 with `-bypass`: START opens the pause
+menu, the sticks move nothing); load a save for anything that needs
+playing.
 `tools/level_sweep.sh` uses it to boot every area in turn and report how each
 one does.
 
@@ -320,6 +356,7 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 54 | Four later areas at 36-44 fps (L07_A2a, L06_A2, L08_A2, L02_A4; the level sweep) | Not the graphics card (16-21% busy, no faster at 1x): `RECOMP_WAIT_PROFILE` had the game thread 79% waiting on D3D's GPU wait, so on the executor thread. `perf` with LBR call stacks (Wine's memcpy can't be unwound otherwise) put a third of the executor in ucrtbase: program draws uploaded all sixteen vertex inputs, 256 bytes a vertex, whatever the program read (now one packed array per input it reads, each in its own vertex-buffer slot), and three getenv checks still ran per texture, per draw and per APU register access (now read once). Executor CPU per frame, AI on, before/after: L07_A2a 16.7 -> 8.1 ms (36 -> 57-60 fps), L02_A4 13-16 -> 7-9, L06_A2 8.5-12.3 -> 4.5-6.7, L08_A2 10.2 -> 8.4. Frames match | toolkit `nv2a_gpu_d3d11.c`, `nv2a_pb_exec.c`, `apu_mmio_hook.c` |
 | 55 | (user report) 19-35 fps in the first boss fight (L02_A4) after dying and continuing; fine before | Reproduced by warping in, walking Nevin at the boss until he died and continuing: 25 fps for ~50 s. A new ten-second line in the log (render targets made and why, readbacks and who asked, textures that could not be sampled from a GPU surface and why, image blits) showed 18,000-23,500 readbacks per 10 s, 7 s of every 10 waiting: the title blits ~1,200 GPU-drawn rectangles a second there, and each blit was done in guest memory too, so both surfaces were read back first. A blit whose source the GPU holds is now done on the GPU only. On the way: the render-target cache went from 8 to 32 (effect surfaces had evicted each other in the user's log), and surfaces are made at the size the title samples them at, not the clip it draws (an effect growing in the corner of a 64x64 texture was rebuilt at every step). The same death and continue: 60 fps, 150 readbacks per 10 s; frames match | toolkit `nv2a_gpu_d3d11.c`, `nv2a_pb_exec.c` |
 | 56 | (user report) The game froze for good in the first boss fight's bombing run: frame stopped, window open | The log: `software method 0100=00000005 NOT handled after 500 ms`, then 0 fps. D3D's BlockOnTime queues that NOP and sleeps on an event its ISR sets on seeing it; a debugger on the frozen game showed the game thread in that wait and the executor idle. The NV2A interrupt status registers are updated by several threads (timer vblank, executor software methods, the title's acknowledgements, poll threads) with plain read-modify-writes, so one thread can wipe another's bit; lose PMC's PGRAPH bit and the ISR never sees the method. Widening the vblank update to 2 ms reproduced the same freeze within seconds of entering a level. All those updates are atomic now; under the same widening, four minutes of the boss fight with a death and continue lost nothing. Rare before (none in a week of logs); fixes 54-55's faster frames likely made it likelier | toolkit `kernel_bridge.c`, `xbox_memory_layout.c` |
+| 57 | (user request) Playing on PC: the keyboard had a fixed test layout (numpad to move, Z/X/A/S for the face buttons), no mouse, and nothing on screen said how fast it ran | Keyboard and mouse now stand in for the pad with WASD, mouse camera and every key rebindable in `settings.ini` (`bind_*`), plus `input = auto/controller/keyboard`; F1 shows a frame counter, drawn at the present from a built-in 5x7 font. The mouse is read raw while the window holds it (WM_INPUT under Wine, SDL's relative mode natively), and its motion is turned into a right-stick tilt that drains over 25 ms, so further means further and stopping stops. The game's stick dead zone, measured with a steady fake mouse (`RECOMP_MOUSE_FAKE`) and the scene's shift between timed frames, is about 0.40 of full tilt: up to there the camera stood still, so the smallest mouse motion starts there. The window loop now wakes on input instead of sleeping 16 ms, so keys and mouse arrive at once. Layout taken from the game's move list (X attacks, Y specials, A jumps, B smashes, left stick click blocks, triggers morph, Black cycles guns) | toolkit `xinput_device.c`, `fb_present.c`, `nv2a_gpu_d3d11.c`; `settings.example.ini`, `run.sh`, `run-linux.sh` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 

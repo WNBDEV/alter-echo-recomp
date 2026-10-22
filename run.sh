@@ -30,16 +30,16 @@ cd "$(dirname "$0")"
 #   (the audio DSP's command word is completed by the toolkit, found from
 #   the APU's registers; RECOMP_DSP_ACK=<addr> is no longer needed)
 #   USB          the controller arrives over the emulated USB port
-#   KEYBOARD     the framebuffer window's keys drive pad 1 (see below)
+#   KEYBOARD     the keyboard and mouse drive pad 1 (see below)
 #   IRQL_LOCK    DPCs and the game thread do not race (controller setup)
 #   PB_EXEC      the GPU command executor -- without it nothing is drawn
 #   TITLE_KEVENTS, VBLANK   events and the frame clock D3D waits on
 #   FB_WINDOW    the window that shows the frames
 # Without these the game runs but draws nothing and opens no window.
 #
-# Keys (window focused): arrows d-pad, Enter START, Z/X/A/S = A/B/X/Y,
-# numpad 8/4/2/6 left stick, I/J/K/L right stick, 1/3 triggers, Q/E
-# white/black, Backspace BACK. An XInput controller works as well.
+# Keys and mouse (window focused; click in it to use the mouse): WASD move,
+# mouse camera, the rest and how to change them in settings.ini. A
+# controller works as well, at the same time.
 #   GPU          draw with the graphics card (Direct3D 11 via DXVK); 0 falls
 #                back to the software rasteriser
 #   HEAP_VFREE   video buffers the game frees go back to the heap. Without
@@ -80,6 +80,12 @@ if [ -f "$SETTINGS" ]; then
             direct_render_targets) var=RECOMP_RT_DIRECT ;;
             texture_filtering)     var=RECOMP_TEXFILTER ;;
             sharpen)               var=RECOMP_SHARPEN ;;
+            input)                 var=RECOMP_INPUT ;;
+            show_fps)              var=RECOMP_SHOW_FPS ;;
+            mouse_sensitivity)     var=RECOMP_MOUSE_SENS ;;
+            mouse_invert_y)        var=RECOMP_MOUSE_INVERT ;;
+            mouse_deadzone)        var=RECOMP_MOUSE_DEADZONE ;;
+            bind_*)                var="RECOMP_BIND_$(printf '%s' "${key#bind_}" | tr a-z A-Z)" ;;
             *) echo "settings.ini: unknown setting '$key' (ignored)" >&2; continue ;;
         esac
         [ -n "${!var:-}" ] || export "$var=$val"
