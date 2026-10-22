@@ -103,8 +103,8 @@ way to play.
   right in a screenshot when started directly (see "Every level, booted" below), but none
   has been played through: scripted events, boss fights and saving there are
   untested. Logs are in `logs/`.
-- Some later areas run below 60 fps: 36-44 in L07_A2a, L06_A2, L08_A2 and
-  L02_A4, on an i7-4790K with a GTX 960; the ending dips in places.
+- A few later areas dip below 60 fps at moments: to ~50 in L07_A2a, L06_A9
+  and the ending, on an i7-4790K with a GTX 960.
 - 60 fps is the cap, as on the console (the game is built around it).
 - The sound is the console's dry mix: the game uses no reverb or effects.
 - Close-ups in the in-engine cutscenes look soft at 2x: edges are rendered
@@ -183,12 +183,10 @@ the late areas' enemies and bosses, their cutscenes with subtitles, the
 ending (L09_A9). The `_Master` files all open on the same corridor: they
 hold shared content, not a place to play. Left idle, Nevin died in L09_A5.
 
-Not all of them hold 60 fps (i7-4790K, GTX 960, 2x). Run again with the
-shader cache warm, four stay low throughout: L07_A2a 37, L06_A2 38, L08_A2
-42, L02_A4 44; the ending (L09_A9) dips to 37 in places. The first sweep also
-had L02_A2, L04_A6, L05_A1, L06_A9, L08_A3, L08_A4, L08_A6a, L09_A2main and
-L09_A8 at 46-54, but L06_A9 held 60 on a second visit, so part of that was
-first-visit shader compiling. Not investigated yet.
+Not all of them held 60 fps (i7-4790K, GTX 960, 2x): L09_A9 33, L07_A2a 37,
+L06_A2 38, L08_A2 42, L02_A4 44, and 46-54 in nine more. Fix 54 took the
+executor's cost per frame down by up to half; swept again, those fourteen
+hold 58-60, with dips to 48-50 in L07_A2a, L06_A9 and the ending (L09_A9).
 
 ## Layout
 
@@ -319,6 +317,7 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 51 | (found with fix 50) Contiguous memory only ever grew: ~4 MB per full-screen video, 15.2 MB at boot and 35 MB after five attract plays, so about a dozen videos in a session would have used up the 64 MB window | `RECOMP_CONTIG_FREE` (freed contiguous blocks are reused) is now a `run.sh` default: the same idle run stays at 17.7 MB from the second play on, 60 fps at the title and 29-30 in videos as before, the sound unchanged. Loading the Surface: Arana save and fighting in it: 50-57 fps (40-60 without), no unresolved calls. The 20 fps it gave was the native build only; `run-linux.sh` leaves it off | `run.sh` |
 | 52 | (proactive) DirectSound's start-up waited on a DSP command word that `run.sh` completed at a hand-entered address, `RECOMP_DSP_ACK=0x808A8810` -- right for this boot's allocation layout and nothing else; any change in where contiguous memory lands (fix 51 reuses it) could have moved it and hung sound setup | The word is byte 0x810 of the GP DSP's scratch memory, whose pages are listed in the scatter-gather table at the APU's `GPSADDR` register; the toolkit now completes the table's first page + 0x810 every APU frame. It derives 0x008A8810 -- the hard-coded address -- and with the address gone from `run.sh` the game boots, completes command 3, loads a level with sound, audio levels as before | toolkit `apu_dsp.c`; `run.sh`, `run-linux.sh` |
 | 53 | (user report, a regression from fix 51) In the Surface: Arana level intro ("I need to find Arana...") Nevin had nothing above the neck, for the whole shot -- with or without mipmaps or GPU vertex programs, fine with `RECOMP_CONTIG_FREE=0` | The GPU backend knows surfaces by guest address and was never told memory was freed: once freed contiguous blocks were reused, a render target it still held over a freed block either stood in for the new data there or was read back over it -- here the talking head's. `MmFreeContiguousMemory` now queues the range and the GPU thread drops what overlaps it, without a readback (the title's Direct3D waits for the GPU before freeing), before its next command. Same restore before/after: no head, then the head, the log saying "dropped 1 surface(s) over memory the title freed". Found with GPU shots taken only while a trigger file exists (`RECOMP_GPU_SHOT_TRIGGER`, new). Also from this round: mip levels are now the game's own, decoded, not generated (they match to a mean 0.13 levels) | toolkit `nv2a_gpu_d3d11.c`, `xbox_memory_layout.c`, `nv2a_pb_exec.c` |
+| 54 | Four later areas at 36-44 fps (L07_A2a, L06_A2, L08_A2, L02_A4; the level sweep) | Not the graphics card (16-21% busy, no faster at 1x): `RECOMP_WAIT_PROFILE` had the game thread 79% waiting on D3D's GPU wait, so on the executor thread. `perf` with LBR call stacks (Wine's memcpy can't be unwound otherwise) put a third of the executor in ucrtbase: program draws uploaded all sixteen vertex inputs, 256 bytes a vertex, whatever the program read (now one packed array per input it reads, each in its own vertex-buffer slot), and three getenv checks still ran per texture, per draw and per APU register access (now read once). Executor CPU per frame, AI on, before/after: L07_A2a 16.7 -> 8.1 ms (36 -> 57-60 fps), L02_A4 13-16 -> 7-9, L06_A2 8.5-12.3 -> 4.5-6.7, L08_A2 10.2 -> 8.4. Frames match | toolkit `nv2a_gpu_d3d11.c`, `nv2a_pb_exec.c`, `apu_mmio_hook.c` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 
