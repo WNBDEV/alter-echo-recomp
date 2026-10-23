@@ -1,7 +1,7 @@
 # Alter Echo for PC
 
 **A static recompilation of Alter Echo (Outrage Games / THQ, Xbox, 2003) that
-runs natively on Linux.**
+runs natively on PC.**
 
 The game's own Xbox program is translated to C and compiled for the PC. The
 console's hardware -- graphics chip, sound processor, controller, kernel -- is
@@ -21,13 +21,14 @@ not an emulator: the game's code runs as ordinary PC code.
 | **Frame rate** | 60 fps, as on the console; the heaviest moments can dip (see [Known limits](#known-limits)) |
 | **Picture** | 2x the original resolution by default (1280x960), up to 4x; the console's 4:3 with black bars |
 | **Input** | Xbox 360-compatible controller with rumble, or keyboard and mouse |
-| **Platforms** | Linux with Wine and DXVK (recommended) · native Linux (experimental) · Windows (untested) |
+| **Platforms** | Linux with Wine and DXVK (recommended) · Windows 10/11 (experimental, untested) · native Linux (experimental) |
 
 ## Contents
 
 - [Requirements](#requirements)
-- [Installing (Wine build, recommended)](#installing-wine-build-recommended)
-- [Installing (native Linux build, experimental)](#installing-native-linux-build-experimental)
+- [Installing on Windows (experimental)](#installing-on-windows-experimental)
+- [Installing on Linux (Wine build, recommended)](#installing-on-linux-wine-build-recommended)
+- [Installing on Linux (native build, experimental)](#installing-on-linux-native-build-experimental)
 - [Updating](#updating)
 - [Playing](#playing)
 - [Controls](#controls)
@@ -50,26 +51,66 @@ minimum column is an estimate scaled from it.
 | | Minimum (estimated) | Recommended |
 |---|---|---|
 | **CPU** | 4 threads, per-core speed of a 3rd/4th-generation Core i5 at ~3.5 GHz or a first-generation Ryzen: mostly 60 fps, heavy moments around 30 | Faster per core than an i7-4790K (roughly Intel 8th generation or Ryzen 3000 and newer): steady 60 fps |
-| **Graphics** | A GPU with **Vulkan 1.3** drivers, which current DXVK requires: NVIDIA GTX 900 series or newer, AMD Radeon HD 7000 / R7 / R9 or newer on Mesa, Intel 6th-generation (Skylake) graphics or newer | Same; any of these handles 2x resolution or more |
+| **Graphics** | **Windows:** any Direct3D 11 graphics card. **Linux:** a GPU with **Vulkan 1.3** drivers, which current DXVK requires: NVIDIA GTX 900 series or newer, AMD Radeon HD 7000 / R7 / R9 or newer on Mesa, Intel 6th-generation (Skylake) graphics or newer | Same; any of these handles 2x resolution or more |
 | **Memory** | 4 GB (needed while building; the game uses well under 1 GB) | 8 GB (faster builds) |
 | **Disk** | 5 GB (about 3 GB of game files and 2 GB of build) | 5 GB |
 
-Older graphics cards such as NVIDIA's GTX 600/700 series and Intel's 4th/5th
-generation graphics lack Vulkan 1.3 and are not supported. On weak integrated
-graphics, set `resolution_scale = 1` (the original 640x480).
+On Linux, older graphics cards such as NVIDIA's GTX 600/700 series and Intel's
+4th/5th generation graphics lack Vulkan 1.3 and are not supported. On weak
+integrated graphics, set `resolution_scale = 1` (the original 640x480).
 
 ### Software
 
-| | Wine build | Native Linux build |
-|---|---|---|
-| **To build** | python3, git, cmake, ninja, MinGW-w64 (`x86_64-w64-mingw32-gcc`) | python3, git, gcc, cmake, ninja, pkg-config, curl, and the SDL2, libepoxy and OpenSSL development files |
-| **To play** | Wine and DXVK (`setup_dxvk` or your distribution's dxvk package) | A Vulkan driver; setup fetches DXVK Native and vkd3d into the project folder |
+| | Windows | Linux, Wine build | Linux, native build |
+|---|---|---|---|
+| **To build** | [MSYS2](https://www.msys2.org), which provides git, Python, CMake, Ninja and the MinGW-w64 compiler (installed in step 2 below) | python3, git, cmake, ninja, MinGW-w64 (`x86_64-w64-mingw32-gcc`) | python3, git, gcc, cmake, ninja, pkg-config, curl, and the SDL2, libepoxy and OpenSSL development files |
+| **To play** | Windows 10 or 11; nothing else to install | Wine and DXVK (`setup_dxvk` or your distribution's dxvk package) | A Vulkan driver; setup fetches DXVK Native and vkd3d into the project folder |
 
 Either setup fetches the xboxrecomp toolkit next to this folder
 (`../xboxrecomp`) at the version this project needs, or checks the copy that is
 already there.
 
-## Installing (Wine build, recommended)
+## Installing on Windows (experimental)
+
+> [!WARNING]
+> **Not yet tested on a real Windows PC.** The game is built as a Windows
+> program and has been played under Wine, but nobody has run these steps on
+> Windows itself yet. If you try them, please [report](#reporting-a-problem)
+> how it went, whether it worked or not.
+
+1. **Install [MSYS2](https://www.msys2.org)** with its installer, then open
+   **MSYS2 MINGW64** from the Start menu. Run every command below in that
+   window.
+2. **Install the build tools:**
+
+   ```bash
+   pacman -S --needed git mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake \
+       mingw-w64-x86_64-ninja mingw-w64-x86_64-python mingw-w64-x86_64-python-pip
+   ```
+
+3. **Get this project:**
+
+   ```bash
+   git clone https://github.com/FILL-IN/alter-echo-recomp.git
+   cd alter-echo-recomp
+   ```
+
+4. **Build it from your copy of the game.** In MSYS2, `C:\Games` is written
+   `/c/Games`:
+
+   ```bash
+   ./setup.sh "/c/Games/Alter Echo (USA).iso"     # or the folder of extracted game files
+   ```
+
+   This takes 20-40 minutes and runs the same steps as on Linux (see the next
+   section), without Wine.
+5. **Play:** double-click **`run.bat`** in the project folder.
+
+If setup cannot install capstone (the disassembler it uses), install MSYS2's
+capstone package for Python (`pacman -Ss capstone` finds it) and run setup
+again.
+
+## Installing on Linux (Wine build, recommended)
 
 ```bash
 git clone https://github.com/FILL-IN/alter-echo-recomp.git
@@ -98,7 +139,7 @@ Useful variations:
 > The translated C code is generated from your copy of the game. Keep it to
 > yourself: it is the game's code in another form.
 
-## Installing (native Linux build, experimental)
+## Installing on Linux (native build, experimental)
 
 The same game compiled as a Linux program. No Wine or MinGW needed.
 
@@ -128,8 +169,8 @@ than the Wine build.
 
 ```bash
 git pull
-./setup.sh "/path/to/your/copy"           # the Wine build
-./setup-linux.sh "/path/to/your/copy"     # the native build
+./setup.sh "/path/to/your/copy"           # Windows (in MSYS2) and the Wine build
+./setup-linux.sh "/path/to/your/copy"     # the native Linux build
 ```
 
 Setup translates and builds again, so the update is complete. If the toolkit next door is older than the
@@ -137,8 +178,9 @@ version this project needs, setup stops and prints the command that updates it.
 
 ## Playing
 
-Start the game with `./run.sh` (or `./run-linux.sh` for the native build). The
-first run creates `settings.ini` from `settings.example.ini`.
+Start the game with **`run.bat`** on Windows, `./run.sh` for the Linux Wine
+build, or `./run-linux.sh` for the native build. The first run creates
+`settings.ini` from `settings.example.ini`.
 
 | Key | What it does |
 |---|---|
@@ -196,10 +238,11 @@ Good to know:
 
 ## Settings
 
-All settings live in `settings.ini`. For a one-off change, the launchers also
-accept the underlying `RECOMP_*` variables, which win over the file: for
-example `RECOMP_SCALE=1 ./run.sh` runs once at the original resolution. Each
-variable's name is in `run.sh`.
+All settings live in `settings.ini`. For a one-off change, the game also
+accepts the underlying `RECOMP_*` variables, which win over the file: for
+example `RECOMP_SCALE=1 ./run.sh` runs once at the original resolution (on
+Windows, `set RECOMP_SCALE=1` in a Command Prompt, then `run.bat` from that
+prompt). Each variable's name is in `run.sh`.
 
 ### Picture
 
@@ -278,6 +321,10 @@ missing and the game fell back to its software renderer. Rerun
 **`settings.ini: unknown setting '...' (ignored)`.** A setting name is
 misspelled; compare it with `settings.example.ini`.
 
+**Nothing happens on Windows.** Look in `logs\` for the newest
+`run-<date>-<time>.txt` and [report it](#reporting-a-problem): Windows support
+is new and every report helps.
+
 **Starting over with Wine.** Delete `~/.local/share/wineprefixes/alter-echo-recomp`
 and run `./setup.sh` again; it recreates the prefix.
 
@@ -315,7 +362,8 @@ files the game opened.
   ending). The cost is in the game's own code on one CPU thread, so a faster
   CPU helps.
 - **60 fps is the cap,** as on the console; the game is built around it.
-- **Windows is untested,** and the setup scripts are Linux-only.
+- **Windows support is experimental:** it has not been run on a real Windows
+  PC yet.
 - **The native Linux build is experimental** and has been played much less than
   the Wine build.
 - **The pause menu's Pitch Axis option** changes only one special camera mode,
@@ -368,16 +416,16 @@ one does.
    the kernel's services, memory layout, the controller over USB, the audio
    processor, and the NV2A graphics chip. Graphics commands are turned into
    Direct3D 11 draws, which DXVK runs on Vulkan.
-3. **The result** is an ordinary program: the Wine build is a Windows `.exe`
-   run through Wine, the native build a Linux executable.
+3. **The result** is an ordinary program: a Windows `.exe`, which Linux runs
+   through Wine, or a native Linux executable.
 
 ## Credits and license
 
 - The [xboxrecomp](https://github.com/sp00nznet/xboxrecomp) toolkit by sp00nz
   and its contributors, MIT licensed. This project builds on
   [a fork](https://github.com/FILL-IN/xboxrecomp) of it.
-- DXVK, vkd3d, Wine, SDL2 and capstone, fetched or used at build time under
-  their own licenses.
+- DXVK, vkd3d, Wine, SDL2, MSYS2 and capstone, fetched or used under their
+  own licenses.
 - This project's own code is MIT licensed (see [LICENSE](LICENSE)).
 
 Alter Echo is a trademark of its respective owner. This project is not

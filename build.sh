@@ -18,14 +18,19 @@ fi
 
 cd "$(dirname "$0")"
 
-toolchain="$(realpath ../xboxrecomp/cmake/mingw-w64-x86_64.cmake)"
+# On Windows (MSYS2's MINGW64 shell) MinGW is the native compiler, so CMake
+# finds it as it is; on Linux it is a cross-compiler, named by the toolchain.
+case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*) toolchain_arg=() ;;
+    *) toolchain_arg=(-DCMAKE_TOOLCHAIN_FILE="$(realpath ../xboxrecomp/cmake/mingw-w64-x86_64.cmake)") ;;
+esac
 
 cmake -S . -B build-win -G Ninja \
-    -DCMAKE_TOOLCHAIN_FILE="$toolchain" \
+    "${toolchain_arg[@]}" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_FLAGS_RELEASE="-O2"
 
 cmake --build build-win -j"${JOBS:-3}"
 
 echo
-echo "Built: build-win/alter_echo_recomp.exe  -- run it with ./run.sh"
+echo "Built: build-win/alter_echo_recomp.exe  -- run it with ./run.sh (Windows: run.bat)"

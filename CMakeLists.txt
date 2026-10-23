@@ -37,6 +37,15 @@ set(XBOXRECOMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../xboxrecomp" CACHE PATH
 # and provides the 'xboxrecomp' umbrella target to link against.
 add_subdirectory(${XBOXRECOMP_DIR} ${CMAKE_BINARY_DIR}/xboxrecomp)
 
+# The versions the log header names when the game is started without run.sh
+# (src/launch.c), read when CMake configures -- setup.sh always does.
+execute_process(COMMAND git describe --always --dirty
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                OUTPUT_VARIABLE AE_BUILD_DESCRIBE OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+execute_process(COMMAND git describe --always --dirty
+                WORKING_DIRECTORY ${XBOXRECOMP_DIR}
+                OUTPUT_VARIABLE AE_TOOLKIT_DESCRIBE OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+
 # ── Recompiled game executable ──────────────────────────────────
 
 # Collect generated recompiled code.
@@ -61,6 +70,8 @@ set(GAME_SOURCES
     src/game_args.c
     # Keyboard help for the game's own modes (WASD in time dilation).
     src/title_input.c
+    # Started without a launcher script (Windows double-click): settings, log.
+    src/launch.c
     # Add game-specific sources here, e.g.:
     # src/asset_loader.c
     # src/custom_renderer.c
@@ -76,6 +87,15 @@ add_executable(${PROJECT_NAME} WIN32
     ${GAME_SOURCES}
     ${RECOMP_GEN_SOURCES}
 )
+if(AE_BUILD_DESCRIBE)
+    set_property(SOURCE src/launch.c APPEND PROPERTY COMPILE_DEFINITIONS
+                 "AE_BUILD_DESCRIBE=\"${AE_BUILD_DESCRIBE}\"")
+endif()
+if(AE_TOOLKIT_DESCRIBE)
+    set_property(SOURCE src/launch.c APPEND PROPERTY COMPILE_DEFINITIONS
+                 "AE_TOOLKIT_DESCRIBE=\"${AE_TOOLKIT_DESCRIBE}\"")
+endif()
+
 
 # Link against the xboxrecomp umbrella target (all 6 runtime libraries)
 target_link_libraries(${PROJECT_NAME} PRIVATE xboxrecomp)
@@ -93,7 +113,7 @@ if(WIN32)
         d3d11
         dxgi
         dxguid
-        xinput
+        xinput1_4      # in every Windows 8+; xinput1_3 needs the old DirectX runtime
         winmm
         # Lets the fault handler resolve the host RIP back to the generated
         # function's symbol, i.e. to the guest function that faulted.

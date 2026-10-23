@@ -113,6 +113,10 @@ export RECOMP_RT_DIRECT="${RECOMP_RT_DIRECT:-1}"
 export RECOMP_CAMERA_FLIP_X="${RECOMP_CAMERA_FLIP_X:-1}"
 export RECOMP_CAMERA_FLIP_Y="${RECOMP_CAMERA_FLIP_Y:-1}"
 
+# Tells the game this script has applied the settings and opens the log, so
+# it does not do that itself (it does when started directly: src/launch.c).
+export RECOMP_LAUNCHER=run.sh
+
 # Raster threads, for the software rasteriser (RECOMP_GPU=0) only: there the
 # GPU is emulated on the CPU, and every thread given to it is a core kept busy. Four is the measured sweet spot on a 4-core/8-thread
 # i7-4790K: 7.3 fps at ~3 cores of load, against 8.6 fps at ~5 with seven

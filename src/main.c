@@ -365,6 +365,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     (void)lpCmdLine;
     (void)nCmdShow;
 
+    {   /* launch.c: started without run.sh (a double-click, run.bat), find
+         * the project folder, apply settings.ini and open the log */
+        extern void launch_init(void);
+        launch_init();
+    }
+
     /* Unbuffered output for immediate visibility during debugging */
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);

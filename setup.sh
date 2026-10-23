@@ -11,7 +11,9 @@
 # Afterwards: ./run.sh
 #
 # Needs: python3, cmake, ninja, x86_64-w64-mingw32-gcc (MinGW-w64), git, wine
-# and DXVK (setup_dxvk, or the dxvk package). For the native Linux build use
+# and DXVK (setup_dxvk, or the dxvk package). On Windows, run it from MSYS2's
+# MINGW64 shell (README: Installing on Windows); Wine is not needed there,
+# and run.bat starts the game. For the native Linux build use
 # ./setup-linux.sh instead: it runs this with NATIVE=1, which stops after the
 # translation and needs neither MinGW nor Wine. The xboxrecomp toolkit is
 # fetched next to this folder (../xboxrecomp) if it is not there already, or
@@ -29,7 +31,7 @@ T="${XBOXRECOMP:-$P/../xboxrecomp}"
 # An existing checkout is never changed, only checked: it must contain this
 # commit (a later one on the same branch is fine).
 TOOLKIT_URL="${TOOLKIT_URL:-https://github.com/FILL-IN/xboxrecomp.git}"
-TOOLKIT_COMMIT="1ef6231c916bb35860567eeb2b80e843d9e2c3bb"
+TOOLKIT_COMMIT="86acf4b3906dd46b777b6cad61c96b23f6207bd7"
 
 say()  { printf '\n== %s\n' "$*"; }
 fail() { printf '\nsetup: %s\n' "$*" >&2; exit 1; }
@@ -48,8 +50,13 @@ SRC="$1"
 # more -- the Windows build and the Wine prefix are left out, and with them
 # the need for MinGW and Wine. setup-linux.sh checks what it compiles with.
 NATIVE="${NATIVE:-0}"
+# Windows, in MSYS2's MINGW64 shell: the same steps without Wine -- the .exe
+# runs as it is -- and run.bat to start it. Experimental: not yet run on a
+# real Windows PC.
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) WINDOWS=1 ;; *) WINDOWS=0 ;; esac
 need=(python3 git)
-[ "$NATIVE" = 1 ] || need+=(cmake ninja x86_64-w64-mingw32-gcc wine)
+[ "$NATIVE" = 1 ] || need+=(cmake ninja x86_64-w64-mingw32-gcc)
+[ "$NATIVE" = 1 ] || [ "$WINDOWS" = 1 ] || need+=(wine)
 say "Checking tools"
 missing=()
 for t in "${need[@]}"; do
@@ -78,7 +85,12 @@ fi
 
 # Python with capstone, which the disassembler needs.
 PY="${PY:-}"
-for cand in "$PY" "$HOME/.venvs/xboxrecomp/bin/python" "$P/.venv/bin/python"; do
+# On Windows, MSYS2's own Python with its capstone package is tried too; on
+# Linux only a known environment, so a system capstone of another version
+# cannot change the translation.
+cands=("$PY" "$HOME/.venvs/xboxrecomp/bin/python" "$P/.venv/bin/python")
+[ "$WINDOWS" = 1 ] && cands+=(python3)
+for cand in "${cands[@]}"; do
     [ -n "$cand" ] && [ -x "$cand" ] && "$cand" -c 'import capstone' 2>/dev/null && { PY="$cand"; break; }
 done
 if ! [ -n "$PY" ] || ! "$PY" -c 'import capstone' 2>/dev/null; then
@@ -133,7 +145,16 @@ if [ -f "$SRC" ]; then
 else
     GAME="$(cd "$SRC" && pwd)"
 fi
-ln -sfn "$GAME" "$P/game"
+if [ "$WINDOWS" = 1 ]; then
+    # A junction: MSYS2's ln -s copies a folder, and a real symbolic link
+    # needs administrator rights or Developer Mode. rmdir drops an old
+    # junction without touching the files it points at.
+    cmd //c rmdir "$(cygpath -w "$P/game")" >/dev/null 2>&1 || true
+    cmd //c mklink /J "$(cygpath -w "$P/game")" "$(cygpath -w "$GAME")" >/dev/null \
+        || fail "could not link game\\ to $GAME (is there already a game folder here?)"
+else
+    ln -sfn "$GAME" "$P/game"
+fi
 
 # ---- translate and build --------------------------------------------------
 say "Extracting the game's runtime-loaded modules"
@@ -149,6 +170,12 @@ fi
 
 say "Compiling (10-20 minutes)"
 JOBS="${JOBS:-1}" "$P/build.sh"
+
+if [ "$WINDOWS" = 1 ]; then
+    say "Done"
+    echo "Play: double-click run.bat in this folder (settings: settings.ini, made on first run)"
+    exit 0
+fi
 
 # ---- Wine prefix ----------------------------------------------------------
 PREFIX="$HOME/.local/share/wineprefixes/alter-echo-recomp"
