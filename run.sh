@@ -122,6 +122,9 @@ export RECOMP_RASTER_THREADS="${RECOMP_RASTER_THREADS:-4}"
 
 export WINEPREFIX="$HOME/.local/share/wineprefixes/alter-echo-recomp"
 export WINEDEBUG="${WINEDEBUG:--all}"
+# No Wine Mono or Gecko: after a Wine update the prefix is refreshed on the
+# next launch, and that would otherwise stop on a dialog offering them.
+export WINEDLLOVERRIDES="${WINEDLLOVERRIDES:-mscoree,mshtml=}"
 
 mkdir -p logs
 log="logs/run-$(date +%Y%m%d-%H%M%S).txt"

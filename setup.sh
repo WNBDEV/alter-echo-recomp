@@ -142,7 +142,9 @@ PREFIX="$HOME/.local/share/wineprefixes/alter-echo-recomp"
 say "Setting up the Wine prefix with DXVK ($PREFIX)"
 export WINEPREFIX="$PREFIX" WINEDEBUG=-all
 mkdir -p "$PREFIX"
-wineboot -u >/dev/null 2>&1 || true
+# Without Wine Mono and Gecko (.NET and the HTML engine; the game uses
+# neither), or a new prefix stops on a dialog offering to download them.
+WINEDLLOVERRIDES="mscoree,mshtml=" wineboot -u >/dev/null 2>&1 || true
 if command -v setup_dxvk >/dev/null; then
     setup_dxvk install >/dev/null
 elif [ -x /usr/share/dxvk/setup_dxvk.sh ]; then
