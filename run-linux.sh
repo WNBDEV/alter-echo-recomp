@@ -83,6 +83,7 @@ if [ -f "$SETTINGS" ]; then
             mouse_sensitivity)     var=RECOMP_MOUSE_SENS ;;
             mouse_invert_y)        var=RECOMP_MOUSE_INVERT ;;
             camera_flip_x)         var=RECOMP_CAMERA_FLIP_X ;;
+            camera_flip_y)         var=RECOMP_CAMERA_FLIP_Y ;;
             mouse_deadzone)        var=RECOMP_MOUSE_DEADZONE ;;
             bind_*)                var="RECOMP_BIND_$(printf '%s' "${key#bind_}" | tr a-z A-Z)" ;;
             *) echo "settings.ini: unknown setting '$key' (ignored)" >&2; continue ;;
@@ -104,9 +105,11 @@ export RECOMP_SCALE="${RECOMP_SCALE:-2}"
 export RECOMP_STACK_KB="${RECOMP_STACK_KB:-2048}"
 export RECOMP_RT_DIRECT="${RECOMP_RT_DIRECT:-1}"
 
-# The camera turns the way the stick or mouse goes (the console swings it the
-# other way; camera_flip_x = 0 in settings.ini keeps that).
+# The camera turns and tilts the way the stick or mouse goes (the console
+# swings it the other way; camera_flip_x / camera_flip_y = 0 in settings.ini
+# keep that).
 export RECOMP_CAMERA_FLIP_X="${RECOMP_CAMERA_FLIP_X:-1}"
+export RECOMP_CAMERA_FLIP_Y="${RECOMP_CAMERA_FLIP_Y:-1}"
 
 # Raster threads, for the software rasteriser (RECOMP_GPU=0) only: there the
 # GPU is emulated on the CPU, and every thread given to it is a core kept busy. Four is the measured sweet spot on a 4-core/8-thread
