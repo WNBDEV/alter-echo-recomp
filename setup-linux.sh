@@ -6,8 +6,8 @@
 # No Wine or MinGW needed. This:
 #
 #   1. runs ./setup.sh with NATIVE=1, which checks your copy of the game,
-#      unpacks it and translates its code to C -- skipped if setup.sh has
-#      done that already (then the game argument may be left out);
+#      unpacks it and translates its code to C. Without the game argument
+#      the code translated earlier (by either setup) is used as it is;
 #   2. fetches DXVK Native -- DXVK's Direct3D 11 as Linux libraries, the same
 #      renderer run.sh uses under Wine -- from DXVK's GitHub release, and
 #      vkd3d-utils (the HLSL shader compiler) unless it is already installed;
@@ -41,11 +41,12 @@ pkg-config --exists epoxy || fail "libepoxy development files not found (libepox
 pkg-config --exists libcrypto || fail "OpenSSL development files not found (libssl-dev / openssl-devel / openssl)"
 echo "ok"
 
-if [ -z "$(ls src/recomp/gen/*.c 2>/dev/null)" ]; then
-    [ $# -ge 1 ] || fail "usage: ./setup-linux.sh <game.iso | extracted game folder>"
+if [ $# -ge 1 ]; then
     NATIVE=1 "$P/setup.sh" "$1"
+elif [ -n "$(ls src/recomp/gen/*.c 2>/dev/null)" ]; then
+    say "Using the code translated earlier (src/recomp/gen); give your game to translate again"
 else
-    say "Using the code ./setup.sh translated earlier (src/recomp/gen)"
+    fail "usage: ./setup-linux.sh <game.iso | extracted game folder>"
 fi
 mkdir -p "$DEPS"
 
