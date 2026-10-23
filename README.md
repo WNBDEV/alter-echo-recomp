@@ -76,10 +76,10 @@ it.
 | C | White | block |
 | Q / E | left / right trigger | morph to gun / sword form |
 | mouse wheel, Tab | Black | next gun |
-| middle click, R | right stick click | |
+| middle click, R | right stick click | time dilation |
 | Enter, Escape | START | pause; "Done" in the Options menu |
 | Backspace | BACK | |
-| arrow keys | d-pad | menus |
+| arrow keys | d-pad | menus; picking targets (in time dilation W A S D do it too) |
 
 The game's own prompts show pad buttons: (A) is Space, (B) is F, START is
 Enter or Escape. In the Options menu, B leaves without keeping changes;
@@ -89,7 +89,9 @@ camera's up/down) change with **left/right**, not A.
 Every key can be changed in `settings.ini` (`bind_a = Space`, several keys
 with commas, `none` for no key; the list of key names is there), and so can
 the mouse: `mouse_sensitivity` (0 turns mouse look off), `mouse_invert_y`,
-and `mouse_deadzone`. The mouse moves the camera by tilting the right stick,
+and `mouse_deadzone`. The camera turns the way the stick or mouse goes; on
+the Xbox it swung the other way (push right, the view turned left), and
+`camera_flip_x = 0` brings that back for the stick and mouse alike. The mouse moves the camera by tilting the right stick,
 as far as its speed asks; the game ignores the stick's first 40%, and the
 mouse starts just past that, so small movements still turn. A very fast
 flick turns no faster than the stick pushed all the way.
@@ -386,6 +388,7 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 59 | (user report) In fights -- shooting plastids, getting shot, Nevin crying out -- the sound crackled and cut out | Not the mix: a fight peaked at 82% of full scale, and the game sets every voice and mix bin the same headroom (7 and 1), so there was nothing to rebalance. It was the sound thread falling behind: with every core loaded it made 73 of the 469 output buffers needed per 10 s, each after the output had run dry. It gave up the CPU after every frame, 1,500 times a second, so the game could take its lock -- costly on a busy machine -- and threw away any time it woke more than 5 ms late instead of catching up; and the output kept one 21 ms buffer in hand. Now it steps aside only while the game is waiting for the lock, catches up unless 100 ms behind, and after any dropout puts two buffers of silence ahead of the sound (six may queue). Same fight, same load: 468-470 buffers per 10 s, the output never dry; boot no longer drops out either (9 times before). The final mix is limited instead of clipped (no change unless it would go over full scale), and the log now says when sound was lost or the mix went over. Both builds | toolkit `src/apu/apu_core.c`, `apu_xaudio2.c`, `apu_dsp.c`, `apu_vp.c` |
 | 60 | (user question, before release) Would a player's log help a bug report? It was ~43 MB an hour, never removed (382 here, 2.4 GB), said nothing about the machine, and the README did not say what to do with it | The trace lines that were 85% of it (one per pushbuffer update, one per 200 draws) were on because the executor switch every player runs also armed the tracer; they, the executor's ten-second detail, every file read after the first 200 (failures still logged) and a kernel summary every 2 s now need a trace switch. Standing in a level the log grows ~70 KB an hour (1.1 MB before the last two). Both launchers keep the newest ten logs, start each with the system (CPU, RAM, graphics card and driver, OS, kernel, Wine, every RECOMP_ setting; no host or user names) and print the log's name on exit; README "Reporting a problem" says what to send | `run.sh`, `run-linux.sh`, README; toolkit `kernel_bridge.c`, `nv2a_pb_exec.c`, `nv2a_pb_scan.c`, `xbox_memory_layout.c` |
 | 61 | (user request) A way to compare the game at 60 fps with a steady 30 | F2 switches between the two while playing (`RECOMP_FPS30=1` starts at 30): the swap chain presents on every second vblank and the flip cap behind it halves, so a hidden window and the native build hold 30 too; the slow-frame log's bar doubles with it. The game keeps real time at 30: Save Game 1's opening cutscene ended 10.6 s after the level opened at 60 and 10.7 s at 30, and the unplayed fight after it ended at 60.8 s and 61.6 s (the game reads the clock, not the frame count). F2 can no longer be bound to a pad button | toolkit `fb_present.c`, `nv2a_gpu_d3d11.c`, `nv2a_pb_exec.c`, `xinput_device.c`; `settings.example.ini` |
+| 62 | (user report) The camera turned against the stick and mouse (push right, the view turned left), and in time dilation only the arrow keys picked targets, not WASD | Both as on the Xbox: the game swings its camera round Nevin the way the stick pushes, and its options flip only the pitch; time dilation reads the D-pad alone (its tutorial: "You can also use the directional pad while in Time Dilation"; the controller's left stick does nothing there either). The right stick's left/right is now flipped for pad, mouse and look keys (`camera_flip_x`, on by default; `RECOMP_CAMERA_FLIP_X`): a fake mouse moving right now turns the view right, and with the flip off the scene moves the other way, as reported. While time dilation runs, WASD press the D-pad too; not otherwise, because in a fight the D-pad picks the target and walking would keep changing it. The time dilation manager is the object at 0x5416B0, its state at +0x9C 5 in play and 0-4 from the right stick click to the end, found from guest memory snapshots; in game, D then moved the target marker to the right-hand enemy | toolkit `xinput_device.c`, `xinput_xbox.h`; `src/title_input.c`, `src/main.c`, `settings.example.ini`, `run.sh`, `run-linux.sh` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 

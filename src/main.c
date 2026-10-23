@@ -404,6 +404,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     g_xbox_mem_offset = xbox_GetMemoryOffset();
     printf("Xbox memory mapped. Offset: 0x%llX\n", (unsigned long long)g_xbox_mem_offset);
 
+    {   /* title_input.c: WASD presses the D-pad in time dilation */
+        extern void title_input_init(void);
+        title_input_init();
+    }
+
     /* Bring up the emulated APU.
      *
      * Gated on the same variable that unmaps its registers, because the two

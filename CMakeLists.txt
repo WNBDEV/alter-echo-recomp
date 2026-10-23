@@ -59,6 +59,8 @@ set(GAME_SOURCES
     src/module_thunks.c
     # RECOMP_ARGS: the game's development command line (level warp, -bypass).
     src/game_args.c
+    # Keyboard help for the game's own modes (WASD in time dilation).
+    src/title_input.c
     # Add game-specific sources here, e.g.:
     # src/asset_loader.c
     # src/custom_renderer.c
