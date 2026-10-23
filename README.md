@@ -19,12 +19,15 @@ on the GPU (Direct3D 11, through DXVK on Linux).
 
 ## What you need
 
-- Linux with Wine and DXVK (the game is built as a Windows program; a native
-  Linux build is in progress, below), or Windows (untested so far)
-- To build: python3, cmake, ninja, git and MinGW-w64
-  (`x86_64-w64-mingw32-gcc`). `setup.sh` fetches the toolkit next to this
-  folder (`../xboxrecomp`) at the version this project needs, or checks the
-  one already there
+- Linux, either with Wine and DXVK (the game is built as a Windows program;
+  the main way to play) or as a native Linux program without Wine
+  (experimental, below). Windows: untested so far
+- To build with Wine: python3, cmake, ninja, git and MinGW-w64
+  (`x86_64-w64-mingw32-gcc`). For the native build instead: python3, git,
+  gcc, cmake, ninja, pkg-config, curl and the SDL2, libepoxy and OpenSSL
+  development files. Either setup fetches the toolkit next to this folder
+  (`../xboxrecomp`) at the version this project needs, or checks the one
+  already there
 - 20-40 minutes for the first build and several GB of free RAM
 - A controller (Xbox 360 or compatible), or a keyboard and mouse
 
@@ -119,13 +122,20 @@ one does.
 
 ## Native Linux build (experimental)
 
-The same game compiled as a Linux program -- no Wine. It needs the C code
-`setup.sh` generated, so run that first, then:
+The same game compiled as a Linux program -- no Wine or MinGW needed:
 
 ```bash
-./setup-linux.sh      # fetches DXVK Native + vkd3d-utils into build-linux/deps, compiles
-./run-linux.sh        # same settings.ini and keys as run.sh
+./setup-linux.sh "/path/to/Alter Echo (USA).iso"   # or the extracted game folder
+./run-linux.sh                                      # same settings.ini and keys as run.sh
 ```
+
+`setup-linux.sh` checks your copy and translates it -- the same steps as
+`setup.sh`, without the Windows build and the Wine prefix; if `setup.sh` has
+run already it reuses that, and the argument can be left out -- then fetches
+DXVK Native and the vkd3d shader compiler into `build-linux/deps` and
+compiles (25-45 minutes). vkd3d is fetched by itself on Arch-based systems;
+elsewhere install your distribution's package (Debian/Ubuntu
+`libvkd3d-utils1`, Fedora `vkd3d-utils`).
 
 Window, sound and controller go through SDL2. Graphics use the same Direct3D
 11 renderer as the Wine build, on DXVK Native (DXVK built as Linux libraries,
@@ -214,6 +224,16 @@ SDL_VIDEODRIVER=x11, it is 60 either way. Still open natively:
   Native can take the SDL window for a swap chain; that hook is the work.
 - SIGTERM does not stop it (`timeout`, `kill` without -9); closing the
   window does.
+
+**Update, 23 Oct.** Both of those are done: the SDL window is the swap
+chain's (`presenting straight to the window (1280x960 now, 4:3 letterboxed),
+vsync`, the same as under Wine), and SIGTERM stops it. `setup-linux.sh` no
+longer needs `setup.sh`'s Wine and MinGW: it runs it with `NATIVE=1`, which
+stops after the translation. Checked on a clean machine -- fresh clones, an
+empty HOME, a PATH with no Wine and no MinGW, no system vkd3d: 24 minutes,
+translation identical to the dev build (64/64 files), DXVK Native and vkd3d
+fetched into `build-linux/deps`, boots on the GPU at 60 fps. Still played far
+less than the Wine build.
 
 ## Memory over a session (22 Oct 2026)
 
@@ -392,6 +412,7 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 62 | (user report) The camera turned against the stick and mouse (push right, the view turned left), and in time dilation only the arrow keys picked targets, not WASD | Both as on the Xbox: the game swings its camera round Nevin the way the stick pushes, and its options flip only the pitch; time dilation reads the D-pad alone (its tutorial: "You can also use the directional pad while in Time Dilation"; the controller's left stick does nothing there either). The right stick's left/right is now flipped for pad, mouse and look keys (`camera_flip_x`, on by default; `RECOMP_CAMERA_FLIP_X`): a fake mouse moving right now turns the view right, and with the flip off the scene moves the other way, as reported. While time dilation runs, WASD press the D-pad too; not otherwise, because in a fight the D-pad picks the target and walking would keep changing it. The time dilation manager is the object at 0x5416B0, its state at +0x9C 5 in play and 0-4 from the right stick click to the end, found from guest memory snapshots; in game, D then moved the target marker to the right-hand enemy | toolkit `xinput_device.c`, `xinput_xbox.h`; `src/title_input.c`, `src/main.c`, `settings.example.ini`, `run.sh`, `run-linux.sh` |
 | 63 | (user report) Up and down were still the console's way: mouse or stick up tilted the view down | The same flip for the right stick's up/down (`camera_flip_y`, on by default; `RECOMP_CAMERA_FLIP_Y`), for pad, mouse and look keys together; the game's Pitch Axis option still flips it back on top. Checked by the user with a real mouse and an Xbox controller | toolkit `xinput_device.c`; `settings.example.ini`, `run.sh`, `run-linux.sh` |
 | 64 | (clean-machine setup test) A new Wine prefix stopped on Wine's dialog offering to download Wine Mono, which the player had to click through | setup.sh makes the prefix with Mono and Gecko disabled (`WINEDLLOVERRIDES="mscoree,mshtml="`); the game uses neither .NET nor the HTML engine. run.sh sets the same, so the prefix refresh after a Wine update cannot raise it either. A fresh prefix now takes 19 s with no dialog and still gets DXVK, and the game boots from it. The rest of the clean test passed at toolkit 2b35e86: fresh clones, an empty HOME, translation identical to the dev build (64/64 files, modules too), compile, boot to the attract video | `setup.sh`, `run.sh` |
+| 65 | (release prep) The native Linux build could not be set up without Wine: `setup-linux.sh` needed `setup.sh`, which refused to run without Wine and MinGW and then built the Windows `.exe` and a Wine prefix | `setup-linux.sh <copy>` now does it all: it runs `setup.sh` with `NATIVE=1` (check the copy, unpack, translate, stop) and checks up front for everything the native compile needs, SDL2, libepoxy and OpenSSL included, where a missing one used to fail half way. Clean-machine test with Wine and MinGW off the PATH and no system vkd3d: setup in 24 minutes, translation identical to the dev build, DXVK Native and vkd3d fetched into `build-linux/deps`, boots on the GPU through the SDL window's swap chain at 60 fps | `setup.sh`, `setup-linux.sh`, README |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 

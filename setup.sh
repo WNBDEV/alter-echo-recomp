@@ -11,7 +11,9 @@
 # Afterwards: ./run.sh
 #
 # Needs: python3, cmake, ninja, x86_64-w64-mingw32-gcc (MinGW-w64), git, wine
-# and DXVK (setup_dxvk, or the dxvk package). The xboxrecomp toolkit is
+# and DXVK (setup_dxvk, or the dxvk package). For the native Linux build use
+# ./setup-linux.sh instead: it runs this with NATIVE=1, which stops after the
+# translation and needs neither MinGW nor Wine. The xboxrecomp toolkit is
 # fetched next to this folder (../xboxrecomp) if it is not there already, or
 # XBOXRECOMP= names another checkout. Expect 20-40 minutes and several GB of
 # RAM (JOBS=2 ./setup.sh is faster if you have the memory).
@@ -42,9 +44,15 @@ KNOWN_XBE_SHA1="9b6a1b054bfe35f43c6478d46228b58afb759273"
 SRC="$1"
 
 # ---- tools ----------------------------------------------------------------
+# NATIVE=1 (from setup-linux.sh): check the copy and translate it, nothing
+# more -- the Windows build and the Wine prefix are left out, and with them
+# the need for MinGW and Wine. setup-linux.sh checks what it compiles with.
+NATIVE="${NATIVE:-0}"
+need=(python3 git)
+[ "$NATIVE" = 1 ] || need+=(cmake ninja x86_64-w64-mingw32-gcc wine)
 say "Checking tools"
 missing=()
-for t in python3 cmake ninja x86_64-w64-mingw32-gcc git wine; do
+for t in "${need[@]}"; do
     command -v "$t" >/dev/null || missing+=("$t")
 done
 [ ${#missing[@]} -eq 0 ] || fail "missing: ${missing[*]} (install them with your package manager)"
@@ -133,6 +141,11 @@ say "Extracting the game's runtime-loaded modules"
 
 say "Translating the game's code to C (5-10 minutes)"
 "$P/tools/regen_modules.sh"
+
+if [ "$NATIVE" = 1 ]; then
+    say "Translated (NATIVE=1: no Windows build or Wine prefix)"
+    exit 0
+fi
 
 say "Compiling (10-20 minutes)"
 JOBS="${JOBS:-1}" "$P/build.sh"

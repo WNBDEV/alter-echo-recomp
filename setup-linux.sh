@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
 # Build the native Linux version (experimental) into build-linux/.
 #
-#   ./setup-linux.sh
+#   ./setup-linux.sh /path/to/AlterEcho.iso     or the extracted game folder
 #
-# Run ./setup.sh first: it checks your copy of the game, unpacks it and
-# translates its code to C, which this build compiles too. This then:
+# No Wine or MinGW needed. This:
 #
-#   1. fetches DXVK Native -- DXVK's Direct3D 11 as Linux libraries, the same
+#   1. runs ./setup.sh with NATIVE=1, which checks your copy of the game,
+#      unpacks it and translates its code to C -- skipped if setup.sh has
+#      done that already (then the game argument may be left out);
+#   2. fetches DXVK Native -- DXVK's Direct3D 11 as Linux libraries, the same
 #      renderer run.sh uses under Wine -- from DXVK's GitHub release, and
 #      vkd3d-utils (the HLSL shader compiler) unless it is already installed;
 #      both go into build-linux/deps, nothing is installed system-wide;
-#   2. configures and compiles with your system compiler.
+#   3. configures and compiles with your system compiler.
 #
-# Then ./run-linux.sh. Needs: gcc, cmake, ninja, curl, SDL2 and OpenSSL
-# development files, and a Vulkan driver.
+# Then ./run-linux.sh. Needs: python3, git, gcc, cmake, ninja, pkg-config,
+# curl, the SDL2, libepoxy and OpenSSL development files, and a Vulkan driver.
+# Expect 25-45 minutes (JOBS=2 compiles faster if you have the memory).
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -27,11 +30,23 @@ say()  { printf '\n== %s\n' "$*"; }
 fail() { printf '\nsetup-linux: %s\n' "$*" >&2; exit 1; }
 
 [ "$(id -u)" -ne 0 ] || fail "run this as your own user, not root"
-for t in gcc cmake ninja curl tar pkg-config; do
-    command -v "$t" >/dev/null || fail "missing: $t"
+say "Checking tools and libraries"
+missing=()
+for t in python3 git gcc cmake ninja curl tar pkg-config; do
+    command -v "$t" >/dev/null || missing+=("$t")
 done
+[ ${#missing[@]} -eq 0 ] || fail "missing: ${missing[*]} (install them with your package manager)"
 pkg-config --exists sdl2 || fail "SDL2 development files not found (libsdl2-dev / SDL2-devel / sdl2)"
-[ -n "$(ls src/recomp/gen/*.c 2>/dev/null)" ] || fail "no translated code in src/recomp/gen -- run ./setup.sh first"
+pkg-config --exists epoxy || fail "libepoxy development files not found (libepoxy-dev / libepoxy-devel / libepoxy)"
+pkg-config --exists libcrypto || fail "OpenSSL development files not found (libssl-dev / openssl-devel / openssl)"
+echo "ok"
+
+if [ -z "$(ls src/recomp/gen/*.c 2>/dev/null)" ]; then
+    [ $# -ge 1 ] || fail "usage: ./setup-linux.sh <game.iso | extracted game folder>"
+    NATIVE=1 "$P/setup.sh" "$1"
+else
+    say "Using the code ./setup.sh translated earlier (src/recomp/gen)"
+fi
 mkdir -p "$DEPS"
 
 say "DXVK Native $DXVK_VERSION"
@@ -51,6 +66,7 @@ elif [ -f "$DEPS/vkd3d/usr/lib/libvkd3d-utils.so.1" ]; then
     echo "in $DEPS/vkd3d"
 elif command -v pacman >/dev/null; then
     # Arch's package, unpacked here rather than installed.
+    command -v zstd >/dev/null || fail "missing: zstd (to unpack the vkd3d package)"
     curl -fL --progress-bar -o "$DEPS/vkd3d.pkg.tar.zst" \
         "https://geo.mirror.pkgbuild.com/extra/os/x86_64/vkd3d-$VKD3D_VERSION-1-x86_64.pkg.tar.zst"
     mkdir -p "$DEPS/vkd3d"
