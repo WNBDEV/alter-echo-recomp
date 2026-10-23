@@ -119,4 +119,29 @@ export LD_LIBRARY_PATH
 mkdir -p logs
 log="logs/native-$(date +%Y%m%d-%H%M%S).txt"
 echo "stderr -> $log"
-"${RECOMP_EXE:-build-linux/alter_echo_recomp}" "$@" 2> >(tee "$log" >&2)
+
+# Keep the newest ten logs of this kind (one is written per launch, and they
+# were never removed: a player's folder reached gigabytes).
+ls -1t logs/native-*.txt 2>/dev/null | tail -n +10 | while IFS= read -r old; do
+    rm -f -- "$old"
+done || true
+
+# The log opens with the system it ran on, so a report needs nothing else:
+# no host or user names, just the hardware, the software and the settings.
+{
+    echo "== Alter Echo recomp, $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "build: $(git describe --always --dirty 2>/dev/null || echo unknown);" \
+         "toolkit $(git -C ../xboxrecomp describe --always --dirty 2>/dev/null || echo unknown)"
+    echo "os: $(sed -n 's/^PRETTY_NAME=//p' /etc/os-release 2>/dev/null | tr -d '"');" \
+         "kernel $(uname -r); session ${XDG_SESSION_TYPE:-unknown}"
+    echo "cpu: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//')," \
+         "$(nproc) threads; ram $(awk '/MemTotal/ {printf "%.1f GB", $2 / 1048576}' /proc/meminfo)"
+    echo "gpu: $(lspci 2>/dev/null | grep -Ei 'vga|3d|display' | sed 's/^[^ ]* //' | paste -sd ';' -)" \
+         "$(sed -n 's/.*Kernel Module *\([0-9.]*\).*/(nvidia \1)/p' /proc/driver/nvidia/version 2>/dev/null)"
+    echo "settings: $(env | grep '^RECOMP_' | sort | paste -sd ' ' -)"
+    echo "=="
+} > "$log"
+status=0
+"${RECOMP_EXE:-build-linux/alter_echo_recomp}" "$@" 2> >(tee -a "$log" >&2) || status=$?
+echo "Log saved to $log -- attach it to a report (README: Reporting a problem)." >&2
+exit "$status"

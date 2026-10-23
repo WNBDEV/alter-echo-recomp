@@ -133,12 +133,35 @@ back to the software renderer (correct, but far slower). Saves are the same
 Status: see "Native Linux" under Development notes. `run.sh` remains the
 way to play.
 
+## Reporting a problem
+
+Every launch writes a log, `logs/run-<date>-<time>.txt` (`logs/native-...`
+for the Linux build), and the launcher prints its name when the game closes.
+The newest ten are kept. For a crash, a freeze, a slowdown or a sound
+problem:
+
+1. Note when it happened and what was going on: the area, a fight, a video,
+   how long you had been playing.
+2. Zip that log (`zip report.zip logs/run-<date>-<time>.txt`, or your file
+   manager's Compress) and attach it to an issue on the project page, with
+   what you saw.
+3. If it happens in one place, a save from just before helps: saves are the
+   folders under `UDATA/` in the game folder.
+
+The log starts with the system it ran on (CPU, RAM, graphics card and
+driver, OS, Wine version) and your settings, so there is no need to list
+them. It holds no names except, in one graphics line, your account's user
+name in a Windows-style path (`C:\users\<name>\...`). What it records along
+the way: frame rate every ten seconds, frames that took 25 ms or more and
+why, the sound cutting out or the mix going over full scale, memory running
+short, and files the game opened.
+
 ## Known limits
 
 - Played through the first missions. Every later area boots and looks
   right in a screenshot when started directly (see "Every level, booted" below), but none
   has been played through: scripted events, boss fights and saving there are
-  untested. Logs are in `logs/`.
+  untested. Logs are in `logs/` (see "Reporting a problem").
 - A few later areas dip below 60 fps at moments: to ~50 in L07_A2a, L06_A9
   and the ending, on an i7-4790K with a GTX 960.
 - 60 fps is the cap, as on the console (the game is built around it).
@@ -359,6 +382,7 @@ Windows-only, so the Linux equivalent is in `logs/README-ghidra.txt`.
 | 57 | (user request) Playing on PC: the keyboard had a fixed test layout (numpad to move, Z/X/A/S for the face buttons), no mouse, and nothing on screen said how fast it ran | Keyboard and mouse now stand in for the pad with WASD, mouse camera and every key rebindable in `settings.ini` (`bind_*`), plus `input = auto/controller/keyboard`; F1 shows a frame counter, drawn at the present from a built-in 5x7 font. The mouse is read raw while the window holds it (WM_INPUT under Wine, SDL's relative mode natively), and its motion is turned into a right-stick tilt that drains over 25 ms, so further means further and stopping stops. The game's stick dead zone, measured with a steady fake mouse (`RECOMP_MOUSE_FAKE`) and the scene's shift between timed frames, is about 0.40 of full tilt: up to there the camera stood still, so the smallest mouse motion starts there. The window loop now wakes on input instead of sleeping 16 ms, so keys and mouse arrive at once. Layout taken from the game's move list (X attacks, Y specials, A jumps, B smashes, left stick click blocks, triggers morph, Black cycles guns) | toolkit `xinput_device.c`, `fb_present.c`, `nv2a_gpu_d3d11.c`; `settings.example.ini`, `run.sh`, `run-linux.sh` |
 | 58 | (user report) The game crashed in L08_MASTER while browsing View Moves, 75 minutes and eleven areas into a session: `xbox_HeapAlloc: out of memory (requested 2295776, used 55442544/57147392)`, then an access violation | The title used the null it got for a Bink buffer. The heap's top was full while megabytes sat free in pieces: freed blocks are only reused whole (the full reclaim mode stalls this game at boot), and frees stopped merging at the empty slot an earlier merge left. Now, at the moment a request would fail and only then, the free runs are merged, a free run at the top goes back to the bump pointer, and the request comes from the top or is split out of the smallest free block that fits. A randomised test of the allocator (alloc/free mixes on 24-56 MB heaps, contents and block table checked every 50 steps) found no overlap or corruption and a half to a tenth of the failures; in game, View Moves with 41 videos and a capped heap (`RECOMP_HEAP_KB`, new) ran normally. Not replayed: the crash needed 75 minutes of a particular session. Also new in the log: every frame 25 ms or more after the one before, with where its time went (waiting for the game, textures, shaders, Present), for the elevator dip in L06_A8B (48 fps on the F1 counter) and future reports | toolkit `xbox_memory_layout.c`, `nv2a_gpu_d3d11.c` |
 | 59 | (user report) In fights -- shooting plastids, getting shot, Nevin crying out -- the sound crackled and cut out | Not the mix: a fight peaked at 82% of full scale, and the game sets every voice and mix bin the same headroom (7 and 1), so there was nothing to rebalance. It was the sound thread falling behind: with every core loaded it made 73 of the 469 output buffers needed per 10 s, each after the output had run dry. It gave up the CPU after every frame, 1,500 times a second, so the game could take its lock -- costly on a busy machine -- and threw away any time it woke more than 5 ms late instead of catching up; and the output kept one 21 ms buffer in hand. Now it steps aside only while the game is waiting for the lock, catches up unless 100 ms behind, and after any dropout puts two buffers of silence ahead of the sound (six may queue). Same fight, same load: 468-470 buffers per 10 s, the output never dry; boot no longer drops out either (9 times before). The final mix is limited instead of clipped (no change unless it would go over full scale), and the log now says when sound was lost or the mix went over. Both builds | toolkit `src/apu/apu_core.c`, `apu_xaudio2.c`, `apu_dsp.c`, `apu_vp.c` |
+| 60 | (user question, before release) Would a player's log help a bug report? It was ~43 MB an hour, never removed (382 here, 2.4 GB), said nothing about the machine, and the README did not say what to do with it | The trace lines that were 85% of it (one per pushbuffer update, one per 200 draws) were on because the executor switch every player runs also armed the tracer; they, the executor's ten-second detail, every file read after the first 200 (failures still logged) and a kernel summary every 2 s now need a trace switch. Standing in a level the log grows ~70 KB an hour (1.1 MB before the last two). Both launchers keep the newest ten logs, start each with the system (CPU, RAM, graphics card and driver, OS, kernel, Wine, every RECOMP_ setting; no host or user names) and print the log's name on exit; README "Reporting a problem" says what to send | `run.sh`, `run-linux.sh`, README; toolkit `kernel_bridge.c`, `nv2a_pb_exec.c`, `nv2a_pb_scan.c`, `xbox_memory_layout.c` |
 
 ## Where it stands (15 Oct 2026, ~01:35)
 
