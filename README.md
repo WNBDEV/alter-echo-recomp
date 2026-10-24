@@ -21,7 +21,7 @@ not an emulator: the game's code runs as ordinary PC code.
 |---|---|
 | **Status** | Playable start to finish (played through on Linux) |
 | **Frame rate** | 60 fps, as on the console; the heaviest moments can dip (see [Known limits](#known-limits)) |
-| **Picture** | 2x the original resolution by default (1280x960), up to 4x; the console's 4:3 with black bars |
+| **Picture** | 2x the original resolution by default (1280x960), up to 4x; widescreen by default, or the console's 4:3 with black bars with `widescreen = 0` |
 | **Input** | Xbox 360-compatible controller with rumble, or keyboard and mouse |
 | **Platforms** | Linux · Windows 10/11 (experimental, untested on a real PC) |
 
@@ -253,6 +253,7 @@ prompt). Each variable's name is in `run-linux.sh`.
 | `fullscreen` | `0` | `1` starts fullscreen (Alt+Enter or F11 toggles either way) |
 | `texture_filtering` | `16` | `0` = top texture level only (distant surfaces shimmer), `1` = mipmaps as the game asks, `2`/`4`/`8`/`16` = plus anisotropic filtering, sharper floors and walls seen at an angle |
 | `sharpen` | `0` | `0` (off) to `1` (strongest). The game's textures were made for a 480i TV; `0.3`-`0.5` suits 2x |
+| `widescreen` | `1` | `1` fills a wide screen or window (16:9, 16:10, up to 21:9) with a wider view instead of black bars. The HUD, menus and text keep their shape in the middle of the screen; movies keep theirs, and the letterboxed opening and ending zoom to fill it |
 | `show_fps` | `0` | `1` shows the frame counter from the start (F1 toggles it) |
 
 ### Controller, keyboard and mouse
@@ -369,6 +370,13 @@ files the game opened.
   not the normal camera; this is how the original game behaves. Use
   `camera_flip_y` instead.
 - **The sound is the console's dry mix.** The game uses no reverb or effects.
+- **Widescreen** is done in the graphics, not the game: the game still
+  decides what to draw from its 4:3 view, so something at the edge of a wide
+  screen could appear a moment late (not seen in testing). The picture is the
+  console's width stretched, so it is a little softer side to side; a higher
+  `resolution_scale` helps. Some screen effects (the pickup ripple, flashes)
+  show their own edges along the sides of the screen, which a 2003 TV hid.
+  `widescreen = 0` gives the console's 4:3.
 - **Cutscene close-ups look soft at 2x.** Edges render at full resolution, but
   the textures are the originals, made for a 480i TV, and the cutscene camera
   magnifies them. `sharpen = 0.3` or so helps.

@@ -7,7 +7,7 @@ from zero. If you run into one of these, or something new, see
 
 ## Contents
 
-- [New features](#new-features): widescreen, New Game+, a survival mode
+- [New features](#new-features): widescreen follow-ups, New Game+, a survival mode
 - [Performance](#performance)
 - [Polish](#polish)
 - [Platforms and installers](#platforms-and-installers)
@@ -16,24 +16,24 @@ from zero. If you run into one of these, or something new, see
 
 ## New features
 
-### Widescreen (16:9) without black bars
+### Widescreen: follow-ups
 
-The game only draws 4:3. The toolkit already tells it the console is set to
-widescreen and it still draws 4:3, so there is no hidden native mode to switch
-on.
+Widescreen is built and on by default (fix 71 in [DEVLOG.md](DEVLOG.md)): a
+wider 3D view, no black bars, the HUD and text in shape in the middle, movies
+in shape. It
+does it in the graphics backend, not by patching the game: the game's one 4:3
+constant turned out to be shared with unrelated maths. What could come next:
 
-**What's known:** `default.xbe` has exactly one 4:3 aspect constant
-(`0x3FAAAAAB`, at address `0x1B413C`), read by 8 instructions in 6 functions.
-One of them is very likely the camera's aspect ratio.
-
-**Plan:** patch that value to 16:9 and stretch the picture to fill the screen
-(anamorphic, the way native widescreen games worked on the Xbox), behind a
-`widescreen = 1` setting in `settings.ini`. If that turns out badly, a plain
-`aspect = stretch` option is the fallback.
-
-**Risks:** the HUD, menus and cutscene videos may come out stretched, and
-objects may pop in at the screen edges, since the game only draws what a 4:3
-camera can see.
+- **Sharper sides:** the frame is the console's width stretched. Rendering
+  wider surfaces instead (a wider resolution scale across than down) would
+  keep full detail.
+- **HUD at the screen's edges:** `RECOMP_WS_HUD=sides` pins the health bar and
+  counters to the corners, but tears apart text the game draws a word at a
+  time (the title screen's "Please press START to begin."). Grouping a line's
+  words before placing them would fix it.
+- **Edge pop-in:** the game still culls with its 4:3 view. Not seen in
+  testing; if something appears late at the sides, its culling field of view
+  is the place to widen.
 
 ### New Game+
 
@@ -184,6 +184,8 @@ generated C. That means a branch, a merge, regenerating, and a full retest (the
 level sweep plus a play-through).
 
 ## Reports wanted
+
+### Seen once
 
 These happened once and couldn't be repeated on demand:
 

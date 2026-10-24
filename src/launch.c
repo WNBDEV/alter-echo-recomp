@@ -130,6 +130,7 @@ static const struct { const char *key, *var; } s_settings[] = {
     { "direct_render_targets", "RECOMP_RT_DIRECT" },
     { "texture_filtering",     "RECOMP_TEXFILTER" },
     { "sharpen",               "RECOMP_SHARPEN" },
+    { "widescreen",            "RECOMP_WIDESCREEN" },
     { "input",                 "RECOMP_INPUT" },
     { "show_fps",              "RECOMP_SHOW_FPS" },
     { "mouse_sensitivity",     "RECOMP_MOUSE_SENS" },
@@ -225,13 +226,14 @@ static void apply_settings(void)
     read_settings();
     /* run.sh's defaults after the file: the render scale, the main thread's
      * stack, effects that sample their own frames read on the GPU, the
-     * camera turning the way the stick goes, and the software rasteriser's
-     * threads (used only with RECOMP_GPU=0). */
+     * camera turning the way the stick goes, widescreen, and the software
+     * rasteriser's threads (used only with RECOMP_GPU=0). */
     env_default("RECOMP_SCALE", "2");
     env_default("RECOMP_STACK_KB", "2048");
     env_default("RECOMP_RT_DIRECT", "1");
     env_default("RECOMP_CAMERA_FLIP_X", "1");
     env_default("RECOMP_CAMERA_FLIP_Y", "1");
+    env_default("RECOMP_WIDESCREEN", "1");
     env_default("RECOMP_RASTER_THREADS", "4");
 }
 

@@ -80,6 +80,7 @@ if [ -f "$SETTINGS" ]; then
             direct_render_targets) var=RECOMP_RT_DIRECT ;;
             texture_filtering)     var=RECOMP_TEXFILTER ;;
             sharpen)               var=RECOMP_SHARPEN ;;
+            widescreen)            var=RECOMP_WIDESCREEN ;;
             input)                 var=RECOMP_INPUT ;;
             show_fps)              var=RECOMP_SHOW_FPS ;;
             mouse_sensitivity)     var=RECOMP_MOUSE_SENS ;;
@@ -112,6 +113,10 @@ export RECOMP_RT_DIRECT="${RECOMP_RT_DIRECT:-1}"
 # keep that).
 export RECOMP_CAMERA_FLIP_X="${RECOMP_CAMERA_FLIP_X:-1}"
 export RECOMP_CAMERA_FLIP_Y="${RECOMP_CAMERA_FLIP_Y:-1}"
+
+# A wide screen is filled with a wider view (widescreen = 0 in settings.ini
+# keeps the console's 4:3 with black bars).
+export RECOMP_WIDESCREEN="${RECOMP_WIDESCREEN:-1}"
 
 # Tells the game this script has applied the settings and opens the log, so
 # it does not do that itself (it does when started directly: src/launch.c).
