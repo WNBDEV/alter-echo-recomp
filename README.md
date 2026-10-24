@@ -1,4 +1,6 @@
-# Alter Echo for PC
+time for more claude slop o algo
+
+# Alter Echo for Linux and or Windows
 
 **A static recompilation of Alter Echo (Outrage Games / THQ, Xbox, 2003) that
 runs natively on PC.**
