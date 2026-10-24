@@ -136,8 +136,7 @@ state 1); 193 unresolved call targets inside detected functions.
 
 #### Running with a virtual controller
 
-`run.sh` passes only display variables through `sudo`, so to set `RECOMP_*`
-variables run it as your own user (not as root):
+Set `RECOMP_*` variables in front of `./run.sh`:
 
 ```bash
 RECOMP_USB=1 RECOMP_IRQL_LOCK=1 ./run.sh               # pad driven by a real controller via XInput
@@ -208,8 +207,8 @@ Further fixes found along the way:
 Start Game / Load Game / Options / Extras / Credits (`logs/main-menu.png`).
 The background is flat, since Bink video was failing (being fixed now).
 
-Run it as your own user (not root): `./run.sh`. It now turns on everything
-this build needs by default (the list and what each does is at the top of
+Run it with `./run.sh`. It now turns on everything this build needs by
+default (the list and what each does is at the top of
 `run.sh`); without those switches the game runs but opens no window, which
 looked like it not starting at all.
 
