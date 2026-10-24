@@ -5,7 +5,7 @@
 #
 # No Wine or MinGW needed. This:
 #
-#   1. runs ./setup.sh with NATIVE=1, which checks your copy of the game,
+#   1. runs tools/setup_game.py --native, which checks your copy of the game,
 #      unpacks it and translates its code to C. Without the game argument
 #      the code translated earlier (by either setup) is used as it is;
 #   2. fetches DXVK Native -- DXVK's Direct3D 11 as Linux libraries, the same
@@ -42,7 +42,7 @@ pkg-config --exists libcrypto || fail "OpenSSL development files not found (libs
 echo "ok"
 
 if [ $# -ge 1 ]; then
-    NATIVE=1 "$P/setup.sh" "$1"
+    python3 "$P/tools/setup_game.py" --native "$1"
 elif [ -n "$(ls src/recomp/gen/*.c 2>/dev/null)" ]; then
     say "Using the code translated earlier (src/recomp/gen); give your game to translate again"
 else
@@ -61,15 +61,18 @@ fi
 echo "in $DEPS/dxvk-native"
 
 say "vkd3d-utils (D3DCompile)"
-if ldconfig -p 2>/dev/null | grep -q 'libvkd3d-utils\.so\.1'; then
+# grep reads to the end: with -q it stops at the first match, ldconfig dies of
+# SIGPIPE and pipefail turns the match into a failure.
+if ldconfig -p 2>/dev/null | grep 'libvkd3d-utils\.so\.1' >/dev/null; then
     echo "installed system-wide"
 elif [ -f "$DEPS/vkd3d/usr/lib/libvkd3d-utils.so.1" ]; then
     echo "in $DEPS/vkd3d"
 elif command -v pacman >/dev/null; then
-    # Arch's package, unpacked here rather than installed.
+    # Arch's package, unpacked here rather than installed. From the archive,
+    # which keeps every version; the mirrors drop one when the next arrives.
     command -v zstd >/dev/null || fail "missing: zstd (to unpack the vkd3d package)"
     curl -fL --progress-bar -o "$DEPS/vkd3d.pkg.tar.zst" \
-        "https://geo.mirror.pkgbuild.com/extra/os/x86_64/vkd3d-$VKD3D_VERSION-1-x86_64.pkg.tar.zst"
+        "https://archive.archlinux.org/packages/v/vkd3d/vkd3d-$VKD3D_VERSION-1-x86_64.pkg.tar.zst"
     mkdir -p "$DEPS/vkd3d"
     tar --zstd -xf "$DEPS/vkd3d.pkg.tar.zst" -C "$DEPS/vkd3d" usr/lib
     rm -f "$DEPS/vkd3d.pkg.tar.zst"

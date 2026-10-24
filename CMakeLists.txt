@@ -119,6 +119,13 @@ if(WIN32)
         # function's symbol, i.e. to the guest function that faulted.
         dbghelp
     )
+    if(MINGW)
+        # MinGW's own runtime goes into the .exe: a posix-threads GCC (the
+        # installer's WinLibs) otherwise links libgcc's pthread_* calls to
+        # libwinpthread-1.dll, which only its bin\ folder has. System DLLs
+        # (d3d11, the UCRT) stay imports; their libraries are import-only.
+        target_link_options(${PROJECT_NAME} PRIVATE -static)
+    endif()
 else()
     # Native build. No -rdynamic: the fault handler names a place by its
     # offset in the executable (dladdr), and exporting every symbol would let

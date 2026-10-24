@@ -17,18 +17,18 @@ not an emulator: the game's code runs as ordinary PC code.
 
 | | |
 |---|---|
-| **Status** | Playable start to finish (played through on the Wine build) |
+| **Status** | Playable start to finish (played through on the Wine build, and played on the native Linux build) |
 | **Frame rate** | 60 fps, as on the console; the heaviest moments can dip (see [Known limits](#known-limits)) |
 | **Picture** | 2x the original resolution by default (1280x960), up to 4x; the console's 4:3 with black bars |
 | **Input** | Xbox 360-compatible controller with rumble, or keyboard and mouse |
-| **Platforms** | Linux with Wine and DXVK (recommended) · Windows 10/11 (experimental, untested) · native Linux (experimental) |
+| **Platforms** | Linux, native (recommended) · Linux with Wine and DXVK · Windows 10/11 (experimental, untested on a real PC) |
 
 ## Contents
 
 - [Requirements](#requirements)
 - [Installing on Windows (experimental)](#installing-on-windows-experimental)
-- [Installing on Linux (Wine build, recommended)](#installing-on-linux-wine-build-recommended)
-- [Installing on Linux (native build, experimental)](#installing-on-linux-native-build-experimental)
+- [Installing on Linux](#installing-on-linux)
+- [Linux: the Wine build instead](#linux-the-wine-build-instead)
 - [Updating](#updating)
 - [Playing](#playing)
 - [Controls](#controls)
@@ -61,126 +61,149 @@ integrated graphics, set `resolution_scale = 1` (the original 640x480).
 
 ### Software
 
-| | Windows | Linux, Wine build | Linux, native build |
-|---|---|---|---|
-| **To build** | [MSYS2](https://www.msys2.org), which provides git, Python, CMake, Ninja and the MinGW-w64 compiler (installed in step 2 below) | python3, git, cmake, ninja, MinGW-w64 (`x86_64-w64-mingw32-gcc`) | python3, git, gcc, cmake, ninja, pkg-config, curl, and the SDL2, libepoxy and OpenSSL development files |
-| **To play** | Windows 10 or 11; nothing else to install | Wine and DXVK (`setup_dxvk` or your distribution's dxvk package) | A Vulkan driver; setup fetches DXVK Native and vkd3d into the project folder |
+| | Windows | Linux |
+|---|---|---|
+| **To install** | Nothing: the installer downloads its own build tools (about 270 MB) | The installer installs the build tools you lack with your package manager, after asking |
+| **To play** | Windows 10 or 11 | A Vulkan driver (your graphics driver's usual one) |
 
-Either setup fetches the xboxrecomp toolkit next to this folder
-(`../xboxrecomp`) at the version this project needs, or checks the copy that is
-already there.
+The installers carry this project and the xboxrecomp toolkit at the version it
+needs. Building [from the source code](#from-the-source-code) instead needs the
+tools listed there.
 
 ## Installing on Windows (experimental)
 
 > [!WARNING]
-> **Not yet tested on a real Windows PC.** The game is built as a Windows
-> program and has been played under Wine, but nobody has run these steps on
-> Windows itself yet. If you try them, please [report](#reporting-a-problem)
-> how it went, whether it worked or not.
+> **Not yet tested on a real Windows PC.** The installer and the game it builds
+> have been run under Wine, but nobody has installed it on Windows itself yet.
+> If you try it, please [report](#reporting-a-problem) how it went, whether it
+> worked or not.
 
-1. **Install [MSYS2](https://www.msys2.org)** with its installer, then open
-   **MSYS2 MINGW64** from the Start menu. Run every command below in that
-   window.
-2. **Install the build tools:**
+1. **Download `AlterEchoInstaller.exe`** from the
+   [Releases page](https://github.com/FILL-IN/alter-echo-recomp/releases).
+2. **Run it.** Windows may say "Windows protected your PC", because the
+   installer is not signed: click **More info**, then **Run anyway**.
+3. **Choose an install folder and your disc image** (or the folder of
+   extracted game files) when it asks.
+4. **Wait while it builds** (30-60 minutes; a console window shows the
+   progress). It downloads the build tools first -- WinLibs' MinGW-w64 GCC,
+   with CMake and Ninja, about 270 MB, and the capstone disassembler -- and
+   checks each against a pinned checksum. Then it checks your copy is the
+   supported release, translates the game's code and compiles it. Everything
+   goes into the install folder; `install.log` there keeps the whole output.
+5. **Play:** start **Alter Echo** from the Start Menu.
+
+Settings, logs and saves are in `alter-echo-recomp\` inside the install
+folder. To uninstall, delete the install folder and the Start Menu shortcut.
+
+## Installing on Linux
+
+The native build: the game compiled as a Linux program, no Wine needed.
+
+1. **Download `AlterEchoInstaller.sh`** from the
+   [Releases page](https://github.com/FILL-IN/alter-echo-recomp/releases).
+2. **Run it in a terminal** (double-clicking a script usually opens it in an
+   editor instead):
 
    ```bash
-   pacman -S --needed git mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake \
-       mingw-w64-x86_64-ninja mingw-w64-x86_64-python mingw-w64-x86_64-python-pip
+   bash AlterEchoInstaller.sh
    ```
 
-3. **Get this project:**
+3. **Give it your disc image** (or the folder of extracted game files) and an
+   install folder when it asks. Dragging the file into the terminal window
+   works; the default folder is `~/Games/Alter Echo`.
+4. **Let it install the build tools you lack.** It lists them and asks before
+   running your package manager (pacman, apt, dnf or zypper) with `sudo`.
+5. **Wait while it builds** (25-45 minutes), then start **Alter Echo** from
+   your applications menu.
 
-   ```bash
-   git clone https://github.com/FILL-IN/alter-echo-recomp.git
-   cd alter-echo-recomp
-   ```
+`--iso <path> --dir <folder>` skips the questions, `--yes` installs the
+packages without asking and `--no-menu` leaves the applications menu alone.
+`install.log` in the install folder keeps the whole output. To uninstall,
+delete the folder and `~/.local/share/applications/alter-echo.desktop`.
 
-4. **Build it from your copy of the game.** In MSYS2, `C:\Games` is written
-   `/c/Games`:
-
-   ```bash
-   ./setup.sh "/c/Games/Alter Echo (USA).iso"     # or the folder of extracted game files
-   ```
-
-   This takes 20-40 minutes and runs the same steps as on Linux (see the next
-   section), without Wine.
-5. **Play:** double-click **`run.bat`** in the project folder.
-
-If setup cannot install capstone (the disassembler it uses), install MSYS2's
-capstone package for Python (`pacman -Ss capstone` finds it) and run setup
-again.
-
-## Installing on Linux (Wine build, recommended)
+### From the source code
 
 ```bash
 git clone https://github.com/FILL-IN/alter-echo-recomp.git
 cd alter-echo-recomp
-./setup.sh "/path/to/Alter Echo (USA).iso"     # or the folder of extracted game files
-./run.sh
-```
-
-`setup.sh` takes 20-40 minutes the first time. It:
-
-1. checks your tools, fetches (or checks) the toolkit, and sets up a small
-   Python environment in `.venv` (this needs an internet connection);
-2. checks your copy of the game is the supported release;
-3. unpacks the disc image into `game-files/` (about 3 GB), if you gave it one;
-4. extracts the game's code modules and translates all of the game's code to C;
-5. compiles it into `build-win/alter_echo_recomp.exe`;
-6. creates a Wine prefix with DXVK in `~/.local/share/wineprefixes/alter-echo-recomp`.
-
-Useful variations:
-
-- `CHECK_ONLY=1 ./setup.sh <copy>` checks your copy and tools without building.
-- `JOBS=2 ./setup.sh <copy>` compiles two files at a time: faster, if you have
-  8 GB of RAM or more.
-
-> [!NOTE]
-> The translated C code is generated from your copy of the game. Keep it to
-> yourself: it is the game's code in another form.
-
-## Installing on Linux (native build, experimental)
-
-The same game compiled as a Linux program. No Wine or MinGW needed.
-
-```bash
 ./setup-linux.sh "/path/to/Alter Echo (USA).iso"   # or the folder of extracted game files
 ./run-linux.sh
 ```
 
-`setup-linux.sh` takes 25-45 minutes. It checks your copy and translates it
-(the same steps as `setup.sh`, without the Windows build and the Wine prefix),
-fetches DXVK Native and the vkd3d shader compiler into `build-linux/deps`
-(nothing is installed system-wide), and compiles. If `setup.sh` has already
-translated your copy, `./setup-linux.sh` without the argument reuses that
-translation and skips straight to compiling.
+This needs python3, git, gcc, cmake, ninja, pkg-config, curl, and the SDL2,
+libepoxy and OpenSSL development files. `setup-linux.sh` takes 25-45 minutes.
+It:
+
+1. fetches (or checks) the xboxrecomp toolkit next to this folder
+   (`../xboxrecomp`) and sets up a small Python environment in `.venv` (this
+   needs an internet connection);
+2. checks your copy of the game is the supported release;
+3. unpacks the disc image into `game-files/` (about 3 GB), if you gave it one;
+4. extracts the game's code modules and translates all of the game's code to C;
+5. fetches DXVK Native and the vkd3d shader compiler into `build-linux/deps`
+   (nothing is installed system-wide) and compiles.
 
 vkd3d is fetched automatically on Arch-based systems. Elsewhere, install your
 distribution's package first: `libvkd3d-utils1` on Debian/Ubuntu,
 `vkd3d-utils` on Fedora. Without it the game still runs, but draws with a
 software renderer that is far slower.
 
+- `JOBS=2 ./setup-linux.sh <copy>` compiles two files at a time: faster, if you
+  have 8 GB of RAM or more.
+- `./setup-linux.sh` without the argument reuses the code translated earlier
+  and only compiles.
+
 Window, sound and controller go through SDL2; graphics use the same Direct3D 11
-renderer as the Wine build, on DXVK Native. Both builds share `settings.ini`,
-the shader cache and your saves. The native build has been played much less
-than the Wine build.
+renderer as the Wine build, on DXVK Native.
+
+> [!NOTE]
+> The translated C code is generated from your copy of the game. Keep it to
+> yourself: it is the game's code in another form.
+
+## Linux: the Wine build instead
+
+The same game built as a Windows program and run through Wine with DXVK. It
+was the first version and is the most played; use it if the native build gives
+you trouble. In the same folder, both builds share `settings.ini`, the shader
+cache and your saves.
+
+The installer builds only the native version; build this one from the source
+code:
+
+```bash
+./setup.sh "/path/to/Alter Echo (USA).iso"     # or the folder of extracted game files
+./run.sh
+```
+
+This needs python3, git, cmake, ninja, MinGW-w64 (`x86_64-w64-mingw32-gcc`),
+Wine and DXVK (`setup_dxvk` or your distribution's dxvk package; on Arch it is
+`dxvk-bin` in the AUR). `setup.sh` runs the same steps as `setup-linux.sh`,
+then compiles `build-win/alter_echo_recomp.exe` and creates a Wine prefix with
+DXVK in `~/.local/share/wineprefixes/alter-echo-recomp`.
+`CHECK_ONLY=1 ./setup.sh <copy>` checks your copy and tools without building.
 
 ## Updating
 
-```bash
-git pull
-./setup.sh "/path/to/your/copy"           # Windows (in MSYS2) and the Wine build
-./setup-linux.sh "/path/to/your/copy"     # the native Linux build
-```
+- **Installed with an installer:** run the newer installer and choose the same
+  folder. The game files, saves and `settings.ini` stay.
+- **From the source code:**
 
-Setup translates and builds again, so the update is complete. If the toolkit next door is older than the
-version this project needs, setup stops and prints the command that updates it.
+  ```bash
+  git pull
+  ./setup-linux.sh "/path/to/your/copy"     # the native build
+  ./setup.sh "/path/to/your/copy"           # the Wine build
+  ```
+
+  Setup translates and builds again, so the update is complete. If the toolkit
+  next door is older than the version this project needs, setup stops and
+  prints the command that updates it.
 
 ## Playing
 
-Start the game with **`run.bat`** on Windows, `./run.sh` for the Linux Wine
-build, or `./run-linux.sh` for the native build. The first run creates
-`settings.ini` from `settings.example.ini`.
+Start **Alter Echo** from the Start Menu (Windows) or your applications menu
+(the Linux installer). From the project folder: **`run.bat`** on Windows,
+`./run-linux.sh` for the native Linux build, `./run.sh` for the Wine build. The
+first run creates `settings.ini` from `settings.example.ini`.
 
 | Key | What it does |
 |---|---|
@@ -325,6 +348,10 @@ misspelled; compare it with `settings.example.ini`.
 `run-<date>-<time>.txt` and [report it](#reporting-a-problem): Windows support
 is new and every report helps.
 
+**The installer stopped.** `install.log` in the install folder has everything
+it printed; the last lines say why. [Report it](#reporting-a-problem) with
+that file attached.
+
 **Starting over with Wine.** Delete `~/.local/share/wineprefixes/alter-echo-recomp`
 and run `./setup.sh` again; it recreates the prefix.
 
@@ -364,8 +391,9 @@ files the game opened.
 - **60 fps is the cap,** as on the console; the game is built around it.
 - **Windows support is experimental:** it has not been run on a real Windows
   PC yet.
-- **The native Linux build is experimental** and has been played much less than
-  the Wine build.
+- **The native Linux build is newer than the Wine build** and has been played
+  less. If something misbehaves in it, try the Wine build, and please report
+  the difference.
 - **The pause menu's Pitch Axis option** changes only one special camera mode,
   not the normal camera; this is how the original game behaves. Use
   `camera_flip_y` instead.
@@ -401,8 +429,9 @@ one does.
 
 - **Runtime switches:** every `RECOMP_*` environment variable (rendering,
   audio, input, diagnostics) is listed in the toolkit's README.
-- **Regenerating the C code:** `tools/regen_modules.sh` runs the whole
-  translation pipeline; `setup.sh` calls it.
+- **Regenerating the C code:** `tools/regen_modules.sh` reruns the whole
+  translation pipeline. Every setup and both installers run
+  `tools/setup_game.py`, which holds it.
 - **Development log:** [DEVLOG.md](DEVLOG.md) is the full history of the port:
   how each problem was found and fixed, with every fix numbered.
 
@@ -424,8 +453,8 @@ one does.
 - The [xboxrecomp](https://github.com/sp00nznet/xboxrecomp) toolkit by sp00nz
   and its contributors, MIT licensed. This project builds on
   [a fork](https://github.com/FILL-IN/xboxrecomp) of it.
-- DXVK, vkd3d, Wine, SDL2, MSYS2 and capstone, fetched or used under their
-  own licenses.
+- DXVK, vkd3d, Wine, SDL2, WinLibs' MinGW-w64 GCC, Python and capstone,
+  fetched or used under their own licenses.
 - This project's own code is MIT licensed (see [LICENSE](LICENSE)).
 
 Alter Echo is a trademark of its respective owner. This project is not
