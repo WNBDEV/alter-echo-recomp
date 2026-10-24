@@ -17,18 +17,17 @@ not an emulator: the game's code runs as ordinary PC code.
 
 | | |
 |---|---|
-| **Status** | Playable start to finish (played through on the Wine build, and played on the native Linux build) |
+| **Status** | Playable start to finish (played through on Linux) |
 | **Frame rate** | 60 fps, as on the console; the heaviest moments can dip (see [Known limits](#known-limits)) |
 | **Picture** | 2x the original resolution by default (1280x960), up to 4x; the console's 4:3 with black bars |
 | **Input** | Xbox 360-compatible controller with rumble, or keyboard and mouse |
-| **Platforms** | Linux, native (recommended) · Linux with Wine and DXVK · Windows 10/11 (experimental, untested on a real PC) |
+| **Platforms** | Linux · Windows 10/11 (experimental, untested on a real PC) |
 
 ## Contents
 
 - [Requirements](#requirements)
 - [Installing on Windows (experimental)](#installing-on-windows-experimental)
 - [Installing on Linux](#installing-on-linux)
-- [Linux: the Wine build instead](#linux-the-wine-build-instead)
 - [Updating](#updating)
 - [Playing](#playing)
 - [Controls](#controls)
@@ -97,7 +96,7 @@ folder. To uninstall, delete the install folder and the Start Menu shortcut.
 
 ## Installing on Linux
 
-The native build: the game compiled as a Linux program, no Wine needed.
+The game is built as a native Linux program.
 
 1. **Download `AlterEchoInstaller.sh`** from the
    [Releases page](https://github.com/WNBDEV/alter-echo-recomp/releases).
@@ -153,34 +152,12 @@ software renderer that is far slower.
 - `./setup-linux.sh` without the argument reuses the code translated earlier
   and only compiles.
 
-Window, sound and controller go through SDL2; graphics use the same Direct3D 11
-renderer as the Wine build, on DXVK Native.
+Window, sound and controller go through SDL2; graphics go through the game's
+Direct3D 11 renderer on DXVK Native, which runs it on Vulkan.
 
 > [!NOTE]
 > The translated C code is generated from your copy of the game. Keep it to
 > yourself: it is the game's code in another form.
-
-## Linux: the Wine build instead
-
-The same game built as a Windows program and run through Wine with DXVK. It
-was the first version and is the most played; use it if the native build gives
-you trouble. In the same folder, both builds share `settings.ini`, the shader
-cache and your saves.
-
-The installer builds only the native version; build this one from the source
-code:
-
-```bash
-./setup.sh "/path/to/Alter Echo (USA).iso"     # or the folder of extracted game files
-./run.sh
-```
-
-This needs python3, git, cmake, ninja, MinGW-w64 (`x86_64-w64-mingw32-gcc`),
-Wine and DXVK (`setup_dxvk` or your distribution's dxvk package; on Arch it is
-`dxvk-bin` in the AUR). `setup.sh` runs the same steps as `setup-linux.sh`,
-then compiles `build-win/alter_echo_recomp.exe` and creates a Wine prefix with
-DXVK in `~/.local/share/wineprefixes/alter-echo-recomp`.
-`CHECK_ONLY=1 ./setup.sh <copy>` checks your copy and tools without building.
 
 ## Updating
 
@@ -190,8 +167,7 @@ DXVK in `~/.local/share/wineprefixes/alter-echo-recomp`.
 
   ```bash
   git pull
-  ./setup-linux.sh "/path/to/your/copy"     # the native build
-  ./setup.sh "/path/to/your/copy"           # the Wine build
+  ./setup-linux.sh "/path/to/your/copy"
   ```
 
   Setup translates and builds again, so the update is complete. If the toolkit
@@ -202,8 +178,8 @@ DXVK in `~/.local/share/wineprefixes/alter-echo-recomp`.
 
 Start **Alter Echo** from the Start Menu (Windows) or your applications menu
 (the Linux installer). From the project folder: **`run.bat`** on Windows,
-`./run-linux.sh` for the native Linux build, `./run.sh` for the Wine build. The
-first run creates `settings.ini` from `settings.example.ini`.
+`./run-linux.sh` on Linux. The first run creates `settings.ini` from
+`settings.example.ini`.
 
 | Key | What it does |
 |---|---|
@@ -263,9 +239,9 @@ Good to know:
 
 All settings live in `settings.ini`. For a one-off change, the game also
 accepts the underlying `RECOMP_*` variables, which win over the file: for
-example `RECOMP_SCALE=1 ./run.sh` runs once at the original resolution (on
-Windows, `set RECOMP_SCALE=1` in a Command Prompt, then `run.bat` from that
-prompt). Each variable's name is in `run.sh`.
+example `RECOMP_SCALE=1 ./run-linux.sh` runs once at the original resolution
+(on Windows, `set RECOMP_SCALE=1` in a Command Prompt, then `run.bat` from that
+prompt). Each variable's name is in `run-linux.sh`.
 
 ### Picture
 
@@ -329,15 +305,15 @@ Key names: `A`-`Z`, `0`-`9`, `F3`-`F10`, `F12`, `Space`, `Enter`, `Escape`,
 the mouse. Check that `mouse_sensitivity` is above `0` and `input` is not
 `controller`.
 
-**The controller isn't detected (native build).** Turn it on or plug it in; it
+**The controller isn't detected (Linux).** Turn it on or plug it in; it
 is picked up within a second, even mid-game. The log shows
 `[INPUT] pad 1: <name>` when it is found.
 
-**The native build runs at about 20 fps.** On Wayland, a window that is covered
+**The game runs at about 20 fps on Linux.** On Wayland, a window that is covered
 by other windows can be slowed down by the desktop. Keep it visible, or start
 with `SDL_VIDEODRIVER=x11 ./run-linux.sh`.
 
-**The native build is very slow everywhere.** The graphics libraries are
+**The game is very slow everywhere on Linux.** The graphics libraries are
 missing and the game fell back to its software renderer. Rerun
 `./setup-linux.sh` and check its messages about DXVK Native and vkd3d.
 
@@ -352,30 +328,26 @@ is new and every report helps.
 it printed; the last lines say why. [Report it](#reporting-a-problem) with
 that file attached.
 
-**Starting over with Wine.** Delete `~/.local/share/wineprefixes/alter-echo-recomp`
-and run `./setup.sh` again; it recreates the prefix.
-
 ## Reporting a problem
 
-Every launch writes a log to `logs/` (`run-<date>-<time>.txt` for the Wine
-build, `native-<date>-<time>.txt` for the native build). The launcher prints
-its name when the game closes, and the newest ten are kept.
+Every launch writes a log to `logs/` (`run-<date>-<time>.txt` on Windows,
+`native-<date>-<time>.txt` on Linux). On Linux the launcher prints its name
+when the game closes; the newest ten are kept.
 
 For a crash, a freeze, a slowdown or a sound problem:
 
 1. Note when it happened and what was going on: the area, a fight, a video,
    how long you had been playing.
-2. Zip that log (`zip report.zip logs/run-<date>-<time>.txt`, or your file
-   manager's Compress) and attach it to an issue on the project page, with
+2. Zip that log (your file manager's Compress, or
+   `zip report.zip logs/native-<date>-<time>.txt`) and attach it to an issue on the project page, with
    what you saw.
 3. If it happens in one place, add a save from just before: saves are the
    folders under `UDATA/` in your game folder.
 
 The log starts with the system it ran on (CPU, RAM, graphics card and driver,
-OS, and the Wine version for the Wine build) and your settings, so you don't
-need to list them. It contains no names, except that in the Wine build one
-graphics line includes your account's user name in a Windows-style path
-(`C:\users\<name>\...`).
+OS) and your settings, so you don't need to list them. It contains no names,
+except your account's user name where it is part of a file path
+(`/home/<name>/...` or `C:\Users\<name>\...`).
 
 Along the way it records the frame rate every ten seconds, any frame that took
 25 ms or more and why, the sound cutting out, memory running short, and the
@@ -391,9 +363,6 @@ files the game opened.
 - **60 fps is the cap,** as on the console; the game is built around it.
 - **Windows support is experimental:** it has not been run on a real Windows
   PC yet.
-- **The native Linux build is newer than the Wine build** and has been played
-  less. If something misbehaves in it, try the Wine build, and please report
-  the difference.
 - **The pause menu's Pitch Axis option** changes only one special camera mode,
   not the normal camera; this is how the original game behaves. Use
   `camera_flip_y` instead.
@@ -409,7 +378,7 @@ files the game opened.
 The game kept its developers' command line, and `RECOMP_ARGS` hands it one:
 
 ```bash
-RECOMP_ARGS="L05_A1 -bypass" ./run.sh    # straight into area L05_A1, no menus
+RECOMP_ARGS="L05_A1 -bypass" ./run-linux.sh    # straight into area L05_A1, no menus
 ```
 
 - Area names are the files in your game folder's `ODB Data/ODB MEDIA/clf`
@@ -423,7 +392,7 @@ RECOMP_ARGS="L05_A1 -bypass" ./run.sh    # straight into area L05_A1, no menus
   nothing). Load a save for anything that needs playing.
 
 `tools/level_sweep.sh` uses this to boot every area in turn and report how each
-one does.
+one does (with the Wine build, below).
 
 ### More
 
@@ -432,6 +401,9 @@ one does.
 - **Regenerating the C code:** `tools/regen_modules.sh` reruns the whole
   translation pipeline. Every setup and both installers run
   `tools/setup_game.py`, which holds it.
+- **The Wine build:** `setup.sh`, `build.sh` and `run.sh` build the Windows
+  version on Linux and run it under Wine with DXVK, as development and testing
+  do; [DEVLOG.md](DEVLOG.md) covers them.
 - **Development log:** [DEVLOG.md](DEVLOG.md) is the full history of the port:
   how each problem was found and fixed, with every fix numbered.
 
@@ -444,16 +416,17 @@ one does.
 2. **Hardware.** The toolkit reimplements what the game expects of the Xbox:
    the kernel's services, memory layout, the controller over USB, the audio
    processor, and the NV2A graphics chip. Graphics commands are turned into
-   Direct3D 11 draws, which DXVK runs on Vulkan.
-3. **The result** is an ordinary program: a Windows `.exe`, which Linux runs
-   through Wine, or a native Linux executable.
+   Direct3D 11 draws, which Windows runs directly and DXVK Native runs on
+   Vulkan on Linux.
+3. **The result** is an ordinary program: a Windows `.exe` or a native Linux
+   executable.
 
 ## Credits and license
 
 - The [xboxrecomp](https://github.com/sp00nznet/xboxrecomp) toolkit by sp00nz
   and its contributors, MIT licensed. This project builds on
   [a fork](https://github.com/WNBDEV/xboxrecomp) of it.
-- DXVK, vkd3d, Wine, SDL2, WinLibs' MinGW-w64 GCC, Python and capstone,
+- DXVK, vkd3d, SDL2, WinLibs' MinGW-w64 GCC, Python and capstone,
   fetched or used under their own licenses.
 - This project's own code is MIT licensed (see [LICENSE](LICENSE)).
 
