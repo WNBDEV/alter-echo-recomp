@@ -43,8 +43,8 @@ WINDOWS = os.name == "nt"
 # fork's gpu-backend branch. Upstream alone does not build it. An existing
 # checkout is never changed, only checked: it must contain this commit (a
 # later one on the same branch is fine).
-TOOLKIT_URL = os.environ.get("TOOLKIT_URL", "https://github.com/FILL-IN/xboxrecomp.git")
-TOOLKIT_COMMIT = "86acf4b3906dd46b777b6cad61c96b23f6207bd7"
+TOOLKIT_URL = os.environ.get("TOOLKIT_URL", "https://github.com/WNBDEV/xboxrecomp.git")
+TOOLKIT_COMMIT = "9704c1e6d2a473c0aa3f6da1550eefa5aa5e1f92"
 
 # The release everything here was made against: Alter Echo, NTSC, version 1.
 # The function list, the fixes and the addresses in the notes are specific to
@@ -92,9 +92,6 @@ def toolkit_archive_url():
 
 def fetch_toolkit(T):
     say("Fetching the xboxrecomp toolkit into " + T)
-    if "FILL-IN" in TOOLKIT_URL:
-        fail("this copy has no toolkit URL yet: put the toolkit at %s yourself "
-             "(or set TOOLKIT_URL=)" % T)
     if shutil.which("git"):
         if subprocess.call(["git", "clone", "--quiet", TOOLKIT_URL, T]) != 0:
             fail("could not clone " + TOOLKIT_URL)

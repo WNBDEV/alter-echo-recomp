@@ -6,7 +6,7 @@ runs natively on PC.**
 The game's own Xbox program is translated to C and compiled for the PC. The
 console's hardware -- graphics chip, sound processor, controller, kernel -- is
 reimplemented by the [xboxrecomp](https://github.com/sp00nznet/xboxrecomp)
-toolkit; this project uses [a fork of it](https://github.com/FILL-IN/xboxrecomp)
+toolkit; this project uses [a fork of it](https://github.com/WNBDEV/xboxrecomp)
 that adds a Direct3D 11 graphics backend and the fixes this game needed. It is
 not an emulator: the game's code runs as ordinary PC code.
 
@@ -79,7 +79,7 @@ tools listed there.
 > worked or not.
 
 1. **Download `AlterEchoInstaller.exe`** from the
-   [Releases page](https://github.com/FILL-IN/alter-echo-recomp/releases).
+   [Releases page](https://github.com/WNBDEV/alter-echo-recomp/releases).
 2. **Run it.** Windows may say "Windows protected your PC", because the
    installer is not signed: click **More info**, then **Run anyway**.
 3. **Choose an install folder and your disc image** (or the folder of
@@ -100,7 +100,7 @@ folder. To uninstall, delete the install folder and the Start Menu shortcut.
 The native build: the game compiled as a Linux program, no Wine needed.
 
 1. **Download `AlterEchoInstaller.sh`** from the
-   [Releases page](https://github.com/FILL-IN/alter-echo-recomp/releases).
+   [Releases page](https://github.com/WNBDEV/alter-echo-recomp/releases).
 2. **Run it in a terminal** (double-clicking a script usually opens it in an
    editor instead):
 
@@ -124,7 +124,7 @@ delete the folder and `~/.local/share/applications/alter-echo.desktop`.
 ### From the source code
 
 ```bash
-git clone https://github.com/FILL-IN/alter-echo-recomp.git
+git clone https://github.com/WNBDEV/alter-echo-recomp.git
 cd alter-echo-recomp
 ./setup-linux.sh "/path/to/Alter Echo (USA).iso"   # or the folder of extracted game files
 ./run-linux.sh
@@ -452,7 +452,7 @@ one does.
 
 - The [xboxrecomp](https://github.com/sp00nznet/xboxrecomp) toolkit by sp00nz
   and its contributors, MIT licensed. This project builds on
-  [a fork](https://github.com/FILL-IN/xboxrecomp) of it.
+  [a fork](https://github.com/WNBDEV/xboxrecomp) of it.
 - DXVK, vkd3d, Wine, SDL2, WinLibs' MinGW-w64 GCC, Python and capstone,
   fetched or used under their own licenses.
 - This project's own code is MIT licensed (see [LICENSE](LICENSE)).
