@@ -172,7 +172,8 @@ def main():
     # 3. The game itself.
     jobs = 2 if ram_gb() >= 12 else 1
     env = dict(os.environ, PATH=os.path.join(mingw, "bin") + os.pathsep + os.environ.get("PATH", ""))
-    say("Building the game (30-60 minutes; %d file%s at a time)" % (jobs, "s" if jobs > 1 else ""))
+    say("Building the game (30-60 minutes the first time, an update that changes only the "
+        "runtime a few; %d file%s at a time)" % (jobs, "s" if jobs > 1 else ""))
     cmd = [sys.executable, "-u", os.path.join(INST, "alter-echo-recomp", "tools", "setup_game.py"),
            src, "--toolkit", os.path.join(INST, "xboxrecomp"), "--jobs", str(jobs)]
     p = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,

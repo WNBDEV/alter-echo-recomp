@@ -164,7 +164,15 @@ Direct3D 11 renderer on DXVK Native, which runs it on Vulkan.
 ## Updating
 
 - **Installed with an installer:** run the newer installer and choose the same
-  folder. The game files, saves and `settings.ini` stay.
+  folder. The game files, saves and `settings.ini` stay. Most updates change
+  only the game's runtime, and take a few minutes: the installer copies in only
+  the files that changed, keeps the game's translated code and compiles only
+  what changed. An update that changes the translator itself builds everything
+  again (25-45 minutes). On Windows, the first update of an install made by
+  1.1.0 or earlier builds everything once. On Linux, the 1.1.0 installer could
+  leave the previous version's runtime in place when updating (no widescreen,
+  no crash fix); running 1.1.1 or later over that install repairs it in about
+  a minute.
 - **From the source code:**
 
   ```bash
@@ -172,9 +180,9 @@ Direct3D 11 renderer on DXVK Native, which runs it on Vulkan.
   ./setup-linux.sh "/path/to/your/copy"
   ```
 
-  Setup translates and builds again, so the update is complete. If the toolkit
-  next door is older than the version this project needs, setup stops and
-  prints the command that updates it.
+  Setup keeps the translated code if nothing it depends on changed, and
+  compiles what did. If the toolkit next door is older than the version this
+  project needs, setup stops and prints the command that updates it.
 
 ## Playing
 

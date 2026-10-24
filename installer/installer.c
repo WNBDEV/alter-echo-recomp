@@ -90,6 +90,35 @@ static int make_dirs(wchar_t *path)
     return 1;
 }
 
+/* Whether the file at path already holds the next size bytes of f. Either
+ * way f is left where it was. An update over an earlier install then leaves
+ * the files that did not change as they were, times included, so the build
+ * compiles only what changed. */
+static int same_file(const wchar_t *path, FILE *f, uint64_t size)
+{
+    static char a[1 << 16], b[1 << 16];
+    long long at = _ftelli64(f);
+    uint64_t left = size;
+    int same = 0;
+    FILE *o = _wfopen(path, L"rb");
+
+    if (!o)
+        return 0;
+    if (_fseeki64(o, 0, SEEK_END) == 0 && (uint64_t)_ftelli64(o) == size) {
+        _fseeki64(o, 0, SEEK_SET);
+        same = 1;
+        while (left && same) {
+            size_t n = left < sizeof a ? (size_t)left : sizeof a;
+            if (fread(a, 1, n, f) != n || fread(b, 1, n, o) != n || memcmp(a, b, n))
+                same = 0;
+            left -= n;
+        }
+    }
+    fclose(o);
+    _fseeki64(f, at, SEEK_SET);
+    return same;
+}
+
 static int unpack(void)
 {
     wchar_t self[MAX_PATH], out[MAX_PATH * 2];
@@ -126,6 +155,10 @@ static int unpack(void)
         _snwprintf(out, MAX_PATH * 2, L"%s\\%s", g_inst, wname);
         out[MAX_PATH * 2 - 1] = 0;
         make_dirs(out);
+        if (same_file(out, f, size)) {
+            _fseeki64(f, (long long)size, SEEK_CUR);
+            continue;
+        }
         o = _wfopen(out, L"wb");
         if (!o) {
             fclose(f);
@@ -200,7 +233,7 @@ static void add_shortcut(void)
 
 int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmdline, int show)
 {
-    int argc, i, quiet = 0, shortcut = 1;
+    int argc, i, quiet = 0, shortcut = 1, unpack_only = 0;
     wchar_t **argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     wchar_t msg[MAX_PATH * 3];
     DWORD code;
@@ -215,6 +248,8 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmdline, int show)
             wcsncpy(g_iso, argv[++i], MAX_PATH - 1);
         } else if (!_wcsicmp(argv[i], L"/noshortcut")) {
             shortcut = 0;
+        } else if (!_wcsicmp(argv[i], L"/unpackonly")) {
+            unpack_only = 1;            /* for testing the installer: no build */
         }
     }
 
@@ -244,6 +279,8 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmdline, int show)
         error_box(msg);
         return 1;
     }
+    if (unpack_only)
+        return 0;
     code = run_bootstrap();
     if (code != 0) {
         _snwprintf(msg, MAX_PATH * 3,

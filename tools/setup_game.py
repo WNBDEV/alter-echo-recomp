@@ -24,10 +24,12 @@ of the same name work too, as they did for setup.sh):
 Expect 20-40 minutes.
 """
 import argparse
+import ast
 import hashlib
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -338,6 +340,117 @@ def wine_prefix():
         print("or the game falls back to Wine's slower Direct3D.")
 
 
+# ---- updates: keep what is still current ---------------------------------
+#
+# An update reinstalls over the same folder. Translating the game again and
+# compiling all of its code takes half an hour, but most updates change only
+# the runtime: the translation comes out the same and only a few files need
+# compiling. So the installers copy only files that changed, which leaves the
+# others' times alone for the build to go by, and the translation is kept
+# when nothing it depends on changed.
+
+def _files(root, rel):
+    """(path relative to root, full path) of the file root/rel, or of every
+    file under the folder root/rel, sorted; no Python caches."""
+    base = os.path.join(root, rel)
+    if os.path.isfile(base):
+        return [(rel, base)]
+    out = []
+    for d, dirs, files in os.walk(base):
+        dirs[:] = sorted(x for x in dirs if x != "__pycache__")
+        for f in sorted(files):
+            if not f.endswith(".pyc"):
+                full = os.path.join(d, f)
+                out.append((os.path.relpath(full, root).replace(os.sep, "/"), full))
+    return out
+
+
+def _translation_source(script):
+    """The part of this script the translation follows -- translate(), the
+    sections it adds, the capstone it pins -- and not the rest (the toolkit
+    pin, the compile step), which updates change far more often."""
+    with open(script, encoding="utf-8") as f:
+        src = f.read()
+    parts = []
+    for node in ast.parse(src).body:
+        if (isinstance(node, ast.FunctionDef) and node.name in ("translate", "run_logged")
+                or isinstance(node, ast.Assign)
+                and any(getattr(t, "id", "") == "EXTRA_SECTIONS" for t in node.targets)):
+            parts.append(ast.get_source_segment(src, node))
+    parts += re.findall(r"capstone==[0-9.]+", src)
+    return "\n".join(parts).encode()
+
+
+def translation_key(proj, toolkit):
+    """What the translated code in proj depends on, as one hash: the
+    toolkit's translator (its tools/), this project's tools and translation
+    inputs, the translation part of this script, and the game."""
+    h = hashlib.sha256()
+
+    def add(name, data):
+        h.update(name.encode() + b"\0" + hashlib.sha256(data).digest())
+
+    for rel, full in _files(toolkit, "tools"):
+        with open(full, "rb") as f:
+            add("toolkit/" + rel, f.read())
+    for rel in ("tools", "seed_functions.json", "src/module_loader.c", "src/game_args.c"):
+        for r, full in _files(proj, rel):
+            if r != "tools/setup_game.py":
+                with open(full, "rb") as f:
+                    add("project/" + r, f.read())
+    add("setup_game.py", _translation_source(os.path.join(proj, "tools", "setup_game.py")))
+    xbe = os.path.join(proj, "game", "default.xbe")
+    with open(xbe, "rb") as f:
+        add("default.xbe", f.read())
+    return h.hexdigest()
+
+
+def _stamp(proj):
+    return os.path.join(proj, "src", "recomp", "gen", ".translation")
+
+
+def _translated(proj):
+    gen = os.path.join(proj, "src", "recomp", "gen")
+    return os.path.isdir(gen) and any(n.startswith("recomp_") and n.endswith(".c")
+                                      for n in os.listdir(gen))
+
+
+def stamp_old(proj, toolkit):
+    """For an install made before the translation was stamped (1.0.0, 1.1.0):
+    stamp it from its own files, before the update replaces them."""
+    if os.path.isfile(_stamp(proj)) or not _translated(proj):
+        return
+    try:
+        key = translation_key(proj, toolkit)
+    except OSError as e:
+        print("not stamped (%s): the update translates again" % e)
+        return
+    with open(_stamp(proj), "w") as f:
+        f.write(key + "\n")
+
+
+def sync_tree(src, dest):
+    """Copy src's files into dest, leaving any that are already the same
+    untouched; a changed file gets the time of the copy, so the build sees it.
+    Nothing in dest is removed (settings, saves, logs and builds live there)."""
+    copied = same = 0
+    for rel, full in _files(src, "."):
+        rel = rel[2:] if rel.startswith("./") else rel
+        out = os.path.join(dest, rel)
+        if os.path.isfile(out) and os.path.getsize(out) == os.path.getsize(full):
+            with open(full, "rb") as a, open(out, "rb") as b:
+                if a.read() == b.read():
+                    same += 1
+                    continue
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        if os.path.lexists(out) and not os.path.isfile(out):
+            fail("%s is in the way" % out)
+        shutil.copyfile(full, out)
+        shutil.copymode(full, out)
+        copied += 1
+    print("%d files copied, %d unchanged" % (copied, same))
+
+
 # ---- main ----------------------------------------------------------------
 
 def main():
@@ -349,7 +462,15 @@ def main():
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--jobs", type=int, default=int(os.environ.get("JOBS", "1")))
     ap.add_argument("--toolkit", default=os.environ.get("XBOXRECOMP", os.path.join(P, "..", "xboxrecomp")))
+    ap.add_argument("--sync", nargs=2, metavar=("FROM", "TO"), help=argparse.SUPPRESS)
+    ap.add_argument("--stamp-old", nargs=2, metavar=("PROJECT", "TOOLKIT"), help=argparse.SUPPRESS)
     a = ap.parse_args()
+    if a.sync:                          # the Linux installer, updating
+        sync_tree(*a.sync)
+        return
+    if a.stamp_old:
+        stamp_old(*a.stamp_old)
+        return
     native, check_only, force = flag("NATIVE", a.native), flag("CHECK_ONLY", a.check_only), flag("FORCE", a.force)
     T = os.path.abspath(a.toolkit)
     src = os.path.abspath(a.source) if a.source else None
@@ -360,6 +481,8 @@ def main():
     if a.translate:                     # tools/regen_modules.sh
         py = os.environ.get("PY") or find_python()
         translate(T, py)
+        with open(_stamp(P), "w") as f:
+            f.write(translation_key(P, T) + "\n")
         return
     if not src:
         fail("usage: setup_game.py <game.iso | extracted game folder>")
@@ -376,22 +499,41 @@ def main():
         return
 
     if os.path.isfile(src):
-        say("Unpacking the disc image into game-files (about 3 GB)")
         game = os.path.join(P, "game-files")
-        os.makedirs(game, exist_ok=True)
-        if subprocess.call([py, "-m", "tools.xiso", "unpack", src, "-o", game], cwd=T) != 0:
-            fail("could not unpack " + src)
+        mark = os.path.join(game, ".unpacked")
+        size = "%d\n" % os.path.getsize(src)
+        done = os.path.isfile(mark) and open(mark).read() == size
+        if done:
+            with open(os.path.join(game, "default.xbe"), "rb") as f:
+                done = hashlib.sha1(f.read()).hexdigest() == KNOWN_XBE_SHA1
+        if done:
+            say("The disc image is unpacked already (game-files)")
+        else:
+            say("Unpacking the disc image into game-files (about 3 GB)")
+            os.makedirs(game, exist_ok=True)
+            if subprocess.call([py, "-m", "tools.xiso", "unpack", src, "-o", game], cwd=T) != 0:
+                fail("could not unpack " + src)
+            with open(mark, "w") as f:
+                f.write(size)
     else:
         game = src
     link_game(game)
 
-    say("Extracting the game's runtime-loaded modules")
-    if subprocess.call([py, os.path.join(P, "tools", "extract_modules.py"),
-                        os.path.join(P, "game"), os.path.join(P, "modules")]) != 0:
-        fail("tools/extract_modules.py failed")
+    key = translation_key(P, T)
+    if _translated(P) and os.path.isfile(_stamp(P)) and open(_stamp(P)).read().strip() == key:
+        say("The game's translated code is up to date (nothing it depends on changed)")
+    else:
+        say("Extracting the game's runtime-loaded modules")
+        if subprocess.call([py, os.path.join(P, "tools", "extract_modules.py"),
+                            os.path.join(P, "game"), os.path.join(P, "modules")]) != 0:
+            fail("tools/extract_modules.py failed")
 
-    say("Translating the game's code to C (5-10 minutes)")
-    translate(T, py)
+        say("Translating the game's code to C (5-10 minutes)")
+        if os.path.isfile(_stamp(P)):
+            os.remove(_stamp(P))
+        translate(T, py)
+        with open(_stamp(P), "w") as f:
+            f.write(key + "\n")
     if native:
         say("Translated (--native: no Windows build or Wine prefix)")
         return

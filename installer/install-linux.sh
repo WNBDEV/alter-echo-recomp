@@ -14,7 +14,8 @@
 # and builds the native Linux version with the project's setup-linux.sh.
 # Outside the folder it only adds the menu entry
 # ~/.local/share/applications/alter-echo.desktop. Run it again over the same
-# folder to update: the game files, saves and settings.ini stay.
+# folder to update: the game files, saves and settings.ini stay, and an update
+# that changes only the runtime takes minutes, not a full build.
 set -euo pipefail
 
 ISO="" DIR="" YES=0 MENU=1
@@ -170,13 +171,42 @@ fi
 # ---- the project ----------------------------------------------------------
 
 say "Unpacking the project and the toolkit"
+# Into a folder of its own first, then only what changed is copied in: an
+# update over an earlier install leaves the files that stayed the same as they
+# were, so the build compiles only what changed, and the game's translation is
+# kept if nothing it depends on changed (tools/setup_game.py).
+stage="$DIR/.unpacking"
+rm -rf "$stage"
+mkdir -p "$stage" || fail "could not create $stage"
 line="$(awk '/^__ARCHIVE_BELOW__$/ {print NR + 1; exit}' "$0")"
-tail -n +"$line" "$0" | tar xzf - -C "$DIR" || fail "could not unpack into $DIR"
+tail -n +"$line" "$0" | tar xzf - -C "$stage" || fail "could not unpack into $stage"
+update=0 old_installer=0
+if [ -d "$DIR/alter-echo-recomp/src/recomp/gen" ]; then
+    update=1
+    [ -f "$DIR/alter-echo-recomp/src/recomp/gen/.translation" ] || old_installer=1
+    python3 "$stage/alter-echo-recomp/tools/setup_game.py" \
+        --stamp-old "$DIR/alter-echo-recomp" "$DIR/xboxrecomp" || true
+fi
+python3 "$stage/alter-echo-recomp/tools/setup_game.py" --sync "$stage" "$DIR" ||
+    fail "could not copy the files into $DIR"
+rm -rf "$stage"
+if [ $old_installer = 1 ]; then
+    # The installers up to 1.1.0 unpacked with tar, which gives each file the
+    # time the installer was made: an update then left the earlier runtime's
+    # compiled objects looking newer than its new sources, and kept them. So
+    # the runtime is compiled again, once; the game's translated code stays.
+    find "$DIR/alter-echo-recomp/build-linux" \( -name '*.o' -o -name '*.a' \) \
+        -not -path '*/src/recomp/gen/*' -delete 2>/dev/null || true
+fi
 echo "into $DIR"
 
 jobs=1
 [ "$(awk '/^MemTotal/ {print $2}' /proc/meminfo)" -ge $((12 * 1024 * 1024)) ] && jobs=2
-say "Building the game (25-45 minutes; $jobs file$( [ $jobs = 2 ] && echo s) at a time)"
+if [ $update = 1 ]; then
+    say "Updating the game (a few minutes if only the runtime changed, else 25-45)"
+else
+    say "Building the game (25-45 minutes; $jobs file$( [ $jobs = 2 ] && echo s) at a time)"
+fi
 cd "$DIR/alter-echo-recomp"
 JOBS=$jobs ./setup-linux.sh "$ISO" || fail "building the game stopped; the messages above say why. Log: $DIR/install.log"
 run="$DIR/alter-echo-recomp/run-linux.sh"
