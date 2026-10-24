@@ -170,6 +170,12 @@ Two 1-pixel vertical lines at about 1/5 and 4/5 of the health bar's width, at bo
   notes could say `bash ~/Downloads/AlterEchoInstaller.sh`.
 - **Unneeded test programs:** the installer also compiles the `d3d8_smoke` test
   programs, which players don't need.
+- **Faster installs on big PCs:** the installers compile at most 2 files at a
+  time (1 under 12 GB of RAM), with no way to change it. Choosing from the
+  machine (about one file per 2.5 GB of RAM above 4 GB, up to the number of
+  threads) and accepting `JOBS=N` / `/jobs N` would cut the compile step to
+  about 5 minutes on a 32 GB, 16-thread PC. Translation stays single-threaded.
+  Only worth doing if players ask: it's a one-time wait the notes announce.
 
 ## Toolkit
 
