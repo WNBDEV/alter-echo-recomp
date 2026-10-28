@@ -170,12 +170,36 @@ Two 1-pixel vertical lines at about 1/5 and 4/5 of the health bar's width, at bo
   notes could say `bash ~/Downloads/AlterEchoInstaller.sh`.
 - **Unneeded test programs:** the installer also compiles the `d3d8_smoke` test
   programs, which players don't need.
-- **Faster installs on big PCs:** the installers compile at most 2 files at a
-  time (1 under 12 GB of RAM), with no way to change it. Choosing from the
-  machine (about one file per 2.5 GB of RAM above 4 GB, up to the number of
-  threads) and accepting `JOBS=N` / `/jobs N` would cut the compile step to
-  about 5 minutes on a 32 GB, 16-thread PC. Translation stays single-threaded.
-  Only worth doing if players ask: it's a one-time wait the notes announce.
+
+### Faster installs
+
+A first install takes about 17 minutes on a 16 GB, 8-thread PC (measured 24
+Oct), and a much faster PC barely gains, because most of that time doesn't
+use its extra cores or memory:
+
+| Step | Time | Why |
+|---|---|---|
+| Translating the game's code to C | about 6.5 min | Runs on one core. 3.6 minutes of it is the translator loading its data files before it translates anything (`Loaded ... in 216.2s` in `logs/step5_recomp.log`). The translating itself takes 68 seconds. |
+| Compiling the 60 translated files | about 8 min | At most 2 files at a time (1 under 12 GB of RAM), whatever the PC. |
+| Unpacking the disc, downloads | about 2 min | Limited by the disk and the network. |
+
+**Plan:**
+1. Compile as many files at once as the PC can take, chosen from its RAM and
+   threads, with `JOBS=N` (Linux) and `/jobs N` (Windows) to override it.
+   First measure GCC's peak memory on the largest translated file
+   (`recomp_0000.c`, which takes about a minute alone) instead of trusting the
+   current guess of about 2 GB each.
+2. Profile the translator's load step (`BatchTranslator` in the toolkit's
+   `tools/recomp/`) with Python's `cProfile`. Loading a few JSON files shouldn't
+   take minutes, so it's probably a slow loop or repeated work. Not confirmed
+   yet.
+
+**Expected:** about 5 minutes on a 32 GB, 16-thread PC, and about 9 on the one
+measured.
+
+**Notes:** fixing the load step changes the toolkit, so the update that
+brings it re-translates and recompiles everything once. Builds with many
+compiles at once put a heavy load on the machine, so test them one at a time.
 
 ## Toolkit
 
