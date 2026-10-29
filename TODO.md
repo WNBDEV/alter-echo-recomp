@@ -7,7 +7,7 @@ from zero. If you run into one of these, or something new, see
 
 ## Contents
 
-- [New features](#new-features): widescreen follow-ups, New Game+, a survival mode
+- [New features](#new-features): how extras are added, widescreen follow-ups, New Game+, a survival mode
 - [Performance](#performance)
 - [Polish](#polish)
 - [Platforms and installers](#platforms-and-installers)
@@ -15,6 +15,24 @@ from zero. If you run into one of these, or something new, see
 - [Reports wanted](#reports-wanted)
 
 ## New features
+
+### How extras are added
+
+The port stays the original game. Gameplay that the original doesn't have,
+like New Game+ and the survival mode, is an extra (decided 29 Oct 2026):
+
+- **Off by default.** The player turns an extra on with a `settings.ini` option
+  or starts it from its own menu or Start Menu entry. With every extra off, the
+  game plays exactly as the original. Display options like widescreen aren't
+  extras.
+- **Its own code**, under `src/extras/`, one file or folder per extra. It hooks
+  into the port in as few places as possible, so the port itself stays easy to
+  read.
+- **Its own README section**, marked as not part of the original game.
+- **Same repository and installers.** A separate "plus" repository would carry
+  a second copy of the installers, the setup and the runtime, and every fix to
+  the port would have to be merged across. Split only if an extra needs changes
+  to the translated code or the toolkit that can't be switched off.
 
 ### Widescreen: follow-ups
 
