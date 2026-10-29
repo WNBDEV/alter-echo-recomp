@@ -163,7 +163,7 @@ Two 1-pixel vertical lines at about 1/5 and 4/5 of the health bar's width, at bo
   building from source hits the same wall. Running the installer inside a
   distrobox container is the likely route, and it needs testing.
 - **Progress during translation:** the installer's "Translating the game's code
-  to C" step goes quiet for 5-10 minutes while it writes the C code. It should
+  to C" step goes quiet for 2-5 minutes while it writes the C code. It should
   name each part and show a running clock, so nobody thinks it has frozen.
 - **The Linux command assumes the download folder:** `bash
   AlterEchoInstaller.sh` only works from the folder the file is in. The release
@@ -173,33 +173,35 @@ Two 1-pixel vertical lines at about 1/5 and 4/5 of the health bar's width, at bo
 
 ### Faster installs
 
-A first install takes about 17 minutes on a 16 GB, 8-thread PC (measured 24
-Oct), and a much faster PC barely gains, because most of that time doesn't
-use its extra cores or memory:
+**Done for 1.1.2 (fix 74, not released yet).** A clean Linux install on the
+same PC (i7-4790K, 4 cores and 8 threads, 16 GB) went from about 20 minutes to
+11.7:
 
-| Step | Time | Why |
-|---|---|---|
-| Translating the game's code to C | about 6.5 min | Runs on one core. 3.6 minutes of it is the translator loading its data files before it translates anything (`Loaded ... in 216.2s` in `logs/step5_recomp.log`). The translating itself takes 68 seconds. |
-| Compiling the 60 translated files | about 8 min | At most 2 files at a time (1 under 12 GB of RAM), whatever the PC. |
-| Unpacking the disc, downloads | about 2 min | Limited by the disk and the network. |
+| Step | 24 Oct | 29 Oct | What changed |
+|---|---|---|---|
+| Translating the game's code to C | about 6.5 min | 4.1 min | The translator's 216-second "load" was decoding every function three times over, and capstone's `disasm()` decodes its whole buffer before handing back the first instruction, so a walk that wanted a few instructions decoded the rest of the function each time. Now each function is decoded once, and walks decode a window at a time. The load takes 84 s. The C that comes out is byte for byte the same. |
+| Compiling the translated files | about 8-9 min, 2 at a time | 7.3 min, 8 at a time | GCC needed far less memory than the 2 GB per file guessed: 1.4-1.6 GB for the three largest files, under 700 MB for the rest. So the build now runs one file per thread, as many as free memory holds (`JOBS=N` on Linux, `/jobs N` on Windows to choose), and starts the largest first. |
+| Unpacking the disc, downloads | about 2 min | 0.3 min | Disk and network; nothing changed here. The disc image was already in the file cache this time. |
 
-**Plan:**
-1. Compile as many files at once as the PC can take, chosen from its RAM and
-   threads, with `JOBS=N` (Linux) and `/jobs N` (Windows) to override it.
-   First measure GCC's peak memory on the largest translated file
-   (`recomp_0000.c`, which takes about a minute alone) instead of trusting the
-   current guess of about 2 GB each.
-2. Profile the translator's load step (`BatchTranslator` in the toolkit's
-   `tools/recomp/`) with Python's `cProfile`. Loading a few JSON files shouldn't
-   take minutes, so it's probably a slow loop or repeated work. Not confirmed
-   yet.
+The compile gained less than expected on this PC (the estimate was 9 minutes
+in total): with 8 files at a time each one compiled about 3 times slower than
+alone, because the 4 cores share their cache and DDR3 memory. There was no
+thermal throttling. A newer PC with more cores should gain much more, but
+that is not measured.
 
-**Expected:** about 5 minutes on a 32 GB, 16-thread PC, and about 9 on the one
-measured.
+An update that changes only the translator now keeps every translated file
+that comes out the same, so it compiles none of them again. Updating 1.1.1 to
+1.1.2 should take about 4-5 minutes, not a full build: a translator change
+tried on the test install took 4.3 minutes, kept all 62 translated files and
+compiled 2 small files.
 
-**Notes:** fixing the load step changes the toolkit, so the update that
-brings it re-translates and recompiles everything once. Builds with many
-compiles at once put a heavy load on the machine, so test them one at a time.
+**Still open:**
+- Translating still runs on one core for about 4 minutes. Most of that is
+  capstone decoding about 2.2 million instructions in Python, once in the
+  disassembler and once in the translator. Decoding in several processes at
+  once could save 1-2 minutes, but it is more code to get right on Windows.
+- Windows install times are estimated (15-30 minutes), not measured since
+  the change.
 
 ## Toolkit
 

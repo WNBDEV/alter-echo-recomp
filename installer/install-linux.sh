@@ -200,15 +200,13 @@ if [ $old_installer = 1 ]; then
 fi
 echo "into $DIR"
 
-jobs=1
-[ "$(awk '/^MemTotal/ {print $2}' /proc/meminfo)" -ge $((12 * 1024 * 1024)) ] && jobs=2
 if [ $update = 1 ]; then
-    say "Updating the game (a few minutes if only the runtime changed, else 25-45)"
+    say "Updating the game (a few minutes if only the runtime changed, else 10-20)"
 else
-    say "Building the game (25-45 minutes; $jobs file$( [ $jobs = 2 ] && echo s) at a time)"
+    say "Building the game (10-20 minutes)"
 fi
 cd "$DIR/alter-echo-recomp"
-JOBS=$jobs ./setup-linux.sh "$ISO" || fail "building the game stopped; the messages above say why. Log: $DIR/install.log"
+./setup-linux.sh "$ISO" || fail "building the game stopped; the messages above say why. Log: $DIR/install.log"
 run="$DIR/alter-echo-recomp/run-linux.sh"
 
 if [ $MENU = 1 ]; then

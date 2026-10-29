@@ -18,13 +18,16 @@ of the same name work too, as they did for setup.sh):
     --check-only    check the copy and the tools, build nothing
     --translate     translate only, from the game already linked at game/
     --force         build even if default.xbe is not the supported release
-    --jobs N        compile N files at a time (default 1: GCC needs ~2 GB each)
+    --jobs N        compile N files at a time (default: one per thread, as many
+                    as the free memory holds); JOBS=N works too
+    --print-jobs    print that number and stop (setup-linux.sh asks it)
     --toolkit DIR   the xboxrecomp toolkit (default: ../xboxrecomp)
 
-Expect 20-40 minutes.
+Expect 10-20 minutes.
 """
 import argparse
 import ast
+import filecmp
 import hashlib
 import io
 import json
@@ -46,7 +49,7 @@ WINDOWS = os.name == "nt"
 # checkout is never changed, only checked: it must contain this commit (a
 # later one on the same branch is fine).
 TOOLKIT_URL = os.environ.get("TOOLKIT_URL", "https://github.com/WNBDEV/xboxrecomp.git")
-TOOLKIT_COMMIT = "e1d0435ec93f71fe435b8bf759b0c95bf6b19cf9"
+TOOLKIT_COMMIT = "3205fe360125ab59095c21b89644ed865f69f065"
 
 # The release everything here was made against: Alter Echo, NTSC, version 1.
 # The function list, the fixes and the addresses in the notes are specific to
@@ -284,19 +287,33 @@ def translate(T, py):
                 "--names-json", os.path.join(P, "tools", "ghidra_names.json")],
                T, os.path.join(L, "step4.6_merge.log"))
 
+    # Into a new folder, then over the old one keeping every file that came out
+    # the same, with its time: a translator change that does not change the C
+    # (a faster translator, say) then compiles nothing again.
     gen = os.path.join(P, "src", "recomp", "gen")
-    if os.path.isdir(gen):
-        for name in os.listdir(gen):
-            if name.startswith("recomp_") and name.endswith(".c"):
-                os.remove(os.path.join(gen, name))
+    new = gen + ".new"
+    shutil.rmtree(new, ignore_errors=True)
+    os.makedirs(new)
     with open(os.path.join(B, "manual_wraps.c"), "wb") as w:
         for f in ("module_loader.c", "game_args.c"):
             with open(os.path.join(P, "src", f), "rb") as r:
                 w.write(r.read())
-    run_logged([py, "-m", "tools.recomp", X, "--all", "--split", "250", "--gen-dir", gen,
+    run_logged([py, "-m", "tools.recomp", X, "--all", "--split", "250", "--gen-dir", new,
                 "--exclude-manual", os.path.join(B, "manual_wraps.c"),
                 "--manual-functions", os.path.join(B, "thunk_functions.json")],
                T, os.path.join(L, "step5_recomp.log"))
+    os.makedirs(gen, exist_ok=True)
+    for name in os.listdir(gen):
+        if (name.startswith("recomp_") and name.endswith(".c")
+                and not os.path.exists(os.path.join(new, name))):
+            os.remove(os.path.join(gen, name))
+    for name in os.listdir(new):
+        made, dest = os.path.join(new, name), os.path.join(gen, name)
+        if os.path.isfile(dest) and filecmp.cmp(made, dest, shallow=False):
+            os.remove(made)
+        else:
+            os.replace(made, dest)
+    os.rmdir(new)
 
     for log, keys in (("step3_disasm.log", ("Total functions",)),
                       ("step5_recomp.log", ("functions (", "unresolved call"))):
@@ -308,8 +325,59 @@ def translate(T, py):
 
 # ---- compile and the Wine prefix ----------------------------------------
 
+# GCC's peak memory compiling the translated files at -O2, measured 28 Oct
+# 2026 (GCC 16.2): the three largest (4.2-4.5 MB of C each) take 1.4-1.6 GB,
+# every other file under 700 MB. CMakeLists.txt starts the largest first, so
+# those three are the ones that run together.
+MB_LARGE_JOB = 1600
+MB_JOB = 700
+MB_SPARE = 1024         # left for the rest of the system
+
+
+def available_mb():
+    """Memory the build can use without pushing other programs out."""
+    if WINDOWS:
+        import ctypes
+
+        class MEMORYSTATUSEX(ctypes.Structure):
+            _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong),
+                        ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
+                        ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
+                        ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong),
+                        ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
+        m = MEMORYSTATUSEX()
+        m.dwLength = ctypes.sizeof(m)
+        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(m)):
+            return m.ullAvailPhys >> 20
+        return 0
+    try:
+        with open("/proc/meminfo") as fh:
+            for line in fh:
+                if line.startswith("MemAvailable:"):
+                    return int(line.split()[1]) >> 10
+    except OSError:
+        pass
+    return 0
+
+
+def auto_jobs():
+    """How many files to compile at once: one per thread, as many as the
+    free memory holds."""
+    if hasattr(os, "process_cpu_count"):            # Python 3.13+
+        threads = os.process_cpu_count() or 1
+    elif hasattr(os, "sched_getaffinity"):
+        threads = len(os.sched_getaffinity(0))
+    else:
+        threads = os.cpu_count() or 1
+    free = available_mb() - MB_SPARE
+    jobs = 1
+    while jobs < threads and MB_LARGE_JOB * min(jobs + 1, 3) + MB_JOB * max(0, jobs - 2) <= free:
+        jobs += 1
+    return jobs
+
+
 def compile_game(T, jobs):
-    say("Compiling (10-20 minutes)")
+    say("Compiling (%d file%s at a time)" % (jobs, "s" if jobs > 1 else ""))
     cfg = ["cmake", "-S", P, "-B", os.path.join(P, "build-win"), "-G", "Ninja",
            "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_C_FLAGS_RELEASE=-O2", "-DXBOXRECOMP_DIR=" + T]
     if not WINDOWS:
@@ -460,11 +528,17 @@ def main():
     ap.add_argument("--check-only", action="store_true")
     ap.add_argument("--translate", action="store_true")
     ap.add_argument("--force", action="store_true")
-    ap.add_argument("--jobs", type=int, default=int(os.environ.get("JOBS", "1")))
+    ap.add_argument("--jobs", type=int, default=int(os.environ.get("JOBS") or 0))
+    ap.add_argument("--print-jobs", action="store_true")
     ap.add_argument("--toolkit", default=os.environ.get("XBOXRECOMP", os.path.join(P, "..", "xboxrecomp")))
     ap.add_argument("--sync", nargs=2, metavar=("FROM", "TO"), help=argparse.SUPPRESS)
     ap.add_argument("--stamp-old", nargs=2, metavar=("PROJECT", "TOOLKIT"), help=argparse.SUPPRESS)
     a = ap.parse_args()
+    if a.jobs <= 0:
+        a.jobs = auto_jobs()
+    if a.print_jobs:
+        print(a.jobs)
+        return
     if a.sync:                          # the Linux installer, updating
         sync_tree(*a.sync)
         return
@@ -528,7 +602,7 @@ def main():
                             os.path.join(P, "game"), os.path.join(P, "modules")]) != 0:
             fail("tools/extract_modules.py failed")
 
-        say("Translating the game's code to C (5-10 minutes)")
+        say("Translating the game's code to C (2-5 minutes)")
         if os.path.isfile(_stamp(P)):
             os.remove(_stamp(P))
         translate(T, py)

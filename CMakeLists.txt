@@ -56,6 +56,16 @@ execute_process(COMMAND git describe --always --dirty
 # time, so a newly generated file (an extra chunk, recomp_stubs_unresolved.c)
 # is silently left out of the build and shows up as unresolved externals.
 file(GLOB RECOMP_GEN_SOURCES CONFIGURE_DEPENDS "src/recomp/gen/*.c")
+# Largest first. Ninja starts files in this order, and the three biggest take
+# up to two minutes each: started last, a parallel build waits on them at the
+# end with every other thread idle.
+set(_gen_by_size "")
+foreach(_f IN LISTS RECOMP_GEN_SOURCES)
+    file(SIZE "${_f}" _size)
+    list(APPEND _gen_by_size "${_size}|${_f}")
+endforeach()
+list(SORT _gen_by_size COMPARE NATURAL ORDER DESCENDING)
+list(TRANSFORM _gen_by_size REPLACE "^[0-9]+\\|" "" OUTPUT_VARIABLE RECOMP_GEN_SOURCES)
 
 # Core game sources
 set(GAME_SOURCES

@@ -15,7 +15,6 @@ Everything goes into the install folder:
     tools/mingw64/       GCC, CMake and Ninja (downloaded)
     install.log          everything printed here
 """
-import ctypes
 import hashlib
 import os
 import subprocess
@@ -94,22 +93,6 @@ def download(what, pin, dest):
     os.replace(part, dest)
 
 
-def ram_gb():
-    class MEMORYSTATUSEX(ctypes.Structure):
-        _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong),
-                    ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
-                    ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
-                    ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong),
-                    ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
-    m = MEMORYSTATUSEX()
-    m.dwLength = ctypes.sizeof(m)
-    try:
-        ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(m))
-        return m.ullTotalPhys / (1 << 30)
-    except Exception:
-        return 0
-
-
 def fix_gcc_specs(mingw):
     """Let GCC link from a folder with spaces in its name ("Alter Echo").
 
@@ -170,12 +153,13 @@ def main():
     fix_gcc_specs(mingw)
 
     # 3. The game itself.
-    jobs = 2 if ram_gb() >= 12 else 1
+    # setup_game.py picks how many files to compile at once (JOBS=N, which
+    # the installer's /jobs N sets, overrides it).
     env = dict(os.environ, PATH=os.path.join(mingw, "bin") + os.pathsep + os.environ.get("PATH", ""))
-    say("Building the game (30-60 minutes the first time, an update that changes only the "
-        "runtime a few; %d file%s at a time)" % (jobs, "s" if jobs > 1 else ""))
+    say("Building the game (15-30 minutes the first time, an update that changes only the "
+        "runtime a few)")
     cmd = [sys.executable, "-u", os.path.join(INST, "alter-echo-recomp", "tools", "setup_game.py"),
-           src, "--toolkit", os.path.join(INST, "xboxrecomp"), "--jobs", str(jobs)]
+           src, "--toolkit", os.path.join(INST, "xboxrecomp")]
     p = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                          cwd=os.path.join(INST, "alter-echo-recomp"))
     for raw in p.stdout:

@@ -12,6 +12,9 @@
  *   AlterEchoInstaller.exe                       asks with the usual dialogs
  *   AlterEchoInstaller.exe /dir <folder> /iso <disc image> [/noshortcut]
  *                                                no dialogs (for testing)
+ *   /jobs N                                      compile N files at a time
+ *                                                (default: the PC's threads,
+ *                                                as many as memory holds)
  *
  * Payload layout, at the end of the file:
  *   per file: u32 path length, path (UTF-8, '/' separators), u64 size, bytes
@@ -248,6 +251,9 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmdline, int show)
             wcsncpy(g_iso, argv[++i], MAX_PATH - 1);
         } else if (!_wcsicmp(argv[i], L"/noshortcut")) {
             shortcut = 0;
+        } else if (!_wcsicmp(argv[i], L"/jobs") && i + 1 < argc) {
+            /* bootstrap.py and setup_game.py inherit it */
+            SetEnvironmentVariableW(L"JOBS", argv[++i]);
         } else if (!_wcsicmp(argv[i], L"/unpackonly")) {
             unpack_only = 1;            /* for testing the installer: no build */
         }
@@ -258,7 +264,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmdline, int show)
                 L"This builds Alter Echo for your PC from your own disc image of the North "
                 L"American Xbox release.\n\n"
                 L"It downloads about 270 MB of free build tools (GCC, CMake, Ninja, capstone), "
-                L"needs about 8 GB of disk space, and takes 30-60 minutes while it translates "
+                L"needs about 8 GB of disk space, and takes 15-30 minutes while it translates "
                 L"and compiles the game.\n\nNo game files are included or downloaded.",
                 TITLE, MB_OKCANCEL | MB_ICONINFORMATION) != IDOK)
             return 0;

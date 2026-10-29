@@ -85,7 +85,7 @@ tools listed there.
    installer is not signed: click **More info**, then **Run anyway**.
 3. **Choose an install folder and your disc image** (or the folder of
    extracted game files) when it asks.
-4. **Wait while it builds** (30-60 minutes; a console window shows the
+4. **Wait while it builds** (15-30 minutes; a console window shows the
    progress). It downloads the build tools first -- WinLibs' MinGW-w64 GCC,
    with CMake and Ninja, about 270 MB, and the capstone disassembler -- and
    checks each against a pinned checksum. Then it checks your copy is the
@@ -114,7 +114,8 @@ The game is built as a native Linux program.
    works; the default folder is `~/Games/Alter Echo`.
 4. **Let it install the build tools you lack.** It lists them and asks before
    running your package manager (pacman, apt, dnf or zypper) with `sudo`.
-5. **Wait while it builds** (25-45 minutes), then start **Alter Echo** from
+5. **Wait while it builds** (about 12 minutes on a 2014 quad-core, less with
+   more cores), then start **Alter Echo** from
    your applications menu.
 
 `--iso <path> --dir <folder>` skips the questions, `--yes` installs the
@@ -132,7 +133,7 @@ cd alter-echo-recomp
 ```
 
 This needs python3, git, gcc, cmake, ninja, pkg-config, curl, and the SDL2,
-libepoxy and OpenSSL development files. `setup-linux.sh` takes 25-45 minutes.
+libepoxy and OpenSSL development files. `setup-linux.sh` takes 10-20 minutes.
 It:
 
 1. fetches (or checks) the xboxrecomp toolkit next to this folder
@@ -167,8 +168,9 @@ Direct3D 11 renderer on DXVK Native, which runs it on Vulkan.
   folder. The game files, saves and `settings.ini` stay. Most updates change
   only the game's runtime, and take a few minutes: the installer copies in only
   the files that changed, keeps the game's translated code and compiles only
-  what changed. An update that changes the translator itself builds everything
-  again (25-45 minutes). On Windows, the first update of an install made by
+  what changed. An update that changes the translator translates the game
+  again (a few minutes) and compiles only the translated files that came out
+  different. On Windows, the first update of an install made by
   1.1.0 or earlier builds everything once. On Linux, the 1.1.0 installer could
   leave the previous version's runtime in place when updating (no widescreen,
   no crash fix); running 1.1.1 or later over that install repairs it in about

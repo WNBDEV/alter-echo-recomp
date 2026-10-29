@@ -9,7 +9,7 @@
 # too; its options are listed there (--check-only, --jobs N, ...), and the
 # old environment variables (CHECK_ONLY=1, JOBS=2, NATIVE=1, FORCE=1,
 # XBOXRECOMP=) still work. Needs python3, git, cmake, ninja, MinGW-w64
-# (x86_64-w64-mingw32-gcc), wine and DXVK. Expect 20-40 minutes. Afterwards:
+# (x86_64-w64-mingw32-gcc), wine and DXVK. Expect 10-20 minutes. Afterwards:
 # ./run.sh
 set -euo pipefail
 cd "$(dirname "$0")"

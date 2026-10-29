@@ -16,7 +16,8 @@
 #
 # Then ./run-linux.sh. Needs: python3, git, gcc, cmake, ninja, pkg-config,
 # curl, the SDL2, libepoxy and OpenSSL development files, and a Vulkan driver.
-# Expect 25-45 minutes (JOBS=2 compiles faster if you have the memory).
+# It compiles as many files at once as the PC's threads and free memory allow
+# (JOBS=N to choose).
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -88,8 +89,9 @@ cmake -S "$P" -B "$P/build-linux" -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DXBOXRECOMP_DIR="$T" \
     -DXBOX_DXVK_NATIVE_INCLUDE="$DEPS/dxvk-native/usr/include/dxvk" >/dev/null
 
-say "Compiling (10-30 minutes)"
-ninja -C "$P/build-linux" -j "${JOBS:-1}"
+jobs="$(python3 "$P/tools/setup_game.py" --print-jobs)"
+say "Compiling ($jobs file$( [ "$jobs" = 1 ] || echo s) at a time)"
+ninja -C "$P/build-linux" -j "$jobs"
 
 say "Done"
 echo "Play with ./run-linux.sh"

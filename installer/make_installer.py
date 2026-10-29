@@ -10,6 +10,7 @@ appended:
     alter-echo-recomp/   this project at HEAD (--worktree: the working tree,
                          tracked and new files, for testing before a commit)
     xboxrecomp/          the toolkit at the commit tools/setup_game.py pins
+                         (--worktree: the toolkit's working tree, likewise)
     bootstrap.py         installer/bootstrap.py
 
 dist/AlterEchoInstaller.sh is installer/install-linux.sh with a .tar.gz of
@@ -197,7 +198,8 @@ def main():
 
     project = (from_worktree(P, "alter-echo-recomp/") if worktree
                else from_archive(P, "HEAD", "alter-echo-recomp/"))
-    toolkit = from_archive(T, toolkit_commit(), "xboxrecomp/")
+    toolkit = (from_worktree(T, "xboxrecomp/") if worktree
+               else from_archive(T, toolkit_commit(), "xboxrecomp/"))
     windows_installer(project_files_for(project, "windows"), toolkit)
     linux_installer(project_files_for(project, "linux"), toolkit)
 
