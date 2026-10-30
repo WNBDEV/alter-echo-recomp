@@ -93,43 +93,57 @@ Not started; option 1 is a quick check of the data before choosing.
 Endless waves of enemies in an arena, getting harder each wave, with a wave
 counter and a timer, until you die.
 
-**What's known:** this is an idea, not researched yet. The engine (Outrage
-Games, who also made Descent 3) has more of the building blocks than you'd
-expect. Its level scripts call about 680 engine functions by name, including:
+**Decided (30 Oct 2026):** Nevin starts fully upgraded (every form, sword,
+gun, health and time dilation upgrade), on no save: no shop, no money, no save
+to pick, and nothing written back to your saves. It starts from its own main
+menu entry, with no setting. Dying shows how far you got (wave reached, time)
+and goes back to the main menu. The first version uses the enemies the arena
+already has.
+
+**Researched (30 Oct 2026):**
+- **No arena on the disc.** The level files are the 51 story areas and the
+  menu; the main menu's cut "arena" entry only ever played a sound (New Game+
+  now uses it), so survival needs another cut entry (Secrets) for its menu
+  entry.
+- **The arena: Paavo Echo's boss arena in L05_A3** (the player's pick for its
+  shape and design). It already has its own spawners, used for the boss
+  fight's extra enemies: Boss Fodder 1-4, Boss Gun 1, Boss Gunpod 1-3 and
+  Paavo Echo 1-5 (copies of Paavo Echo). Enemy types loaded there: Armadillos,
+  gunpods, gun drones and Paavo Echo. L07_A3, the second Paavo Echo fight, has
+  Boss Fight 1-4, Finale 1-4 and Paavo Echo 1-4, with Arana.
+- **More spawn points:** spawners are placed in the level files, but the
+  engine can create an object of any loaded type anywhere
+  (`SA_Obj_CreateObject`), so the port can add enemies where it likes. Only
+  types the area loads can be used.
+- **More arenas later:** each chapter ends with one of Paavo's training
+  sessions, a "Master" area built as an arena, with a bigger enemy mix each
+  time: L00 (Plastids, 10 spawners), L01 (Plastids, gun drones), L02 (+ a
+  gunpod), L03 (Deflectors, an Armadillo), L04 (Stone, MultiStage), L06
+  (Armadillos, Deflectors, gun drones), L08 (Mimic, Stone, MultiStage). A
+  ready-made ladder of floors.
+
+The engine's script functions the mode would use, which the port can call
+by name (as New Game+ does):
 
 | Need | Engine function |
 |---|---|
-| Spawn enemies | "Matcens", Descent-style enemy spawners: `SA_Matcen_ActivateMatcen`, `SA_Matcen_ResetMatcenLimits`, `SQ_Matcen_GetNumAlive`; and `SA_Obj_CreateObject` |
-| Make them harder | `SA_Squad_SetObjectDifficulty`, `SA_Squad_SetDefaultDifficulty`, `SA_Combat_ModifyDamage` |
-| Wave number and timer on screen | `SA_ScreenText_*` (text, whole numbers, decimals, position, fade) and `SA_Timer_*` |
-| Rewards between waves | `SA_Player_AddMoney`, time-dilation and invulnerability power-ups |
-| Move between arenas | `SA_Script_ChangeLevel` |
+| Spawn enemies | `SA_Matcen_ActivateMatcen`, `SA_Matcen_ResetMatcenLimits`, `SA_Matcen_EnableMatcen`, `SQ_Matcen_GetNumAlive`, `VSS_GetMatcenHandle` (a spawner by name); `SA_Obj_CreateObject` |
+| Make them harder | `SA_Squad_SetObjectDifficulty`, `SA_Command_PaavoEchoSetDifficultyLevel` |
+| Wave number and timer on screen | `SA_ScreenText_*` (New Game+'s banner uses it) and `SA_Timer_*` |
+| Refills between waves | time dilation and invulnerability power-ups |
 
-At least one area already has a spawner that keeps going: in L02_A1, elite
-Plastids respawn for as long as you stay and fight them.
+**Open questions:**
+- How to put Nevin straight into the boss arena: the level starts elsewhere.
+- Keeping the boss fight's own script from starting the fight (and Paavo
+  Echo) on its own, or using it as the last wave.
+- How a level script starts and ends its fights: booting a training session
+  with nobody playing, Nevin stands in the entrance and nothing starts.
+- Catching death before the game reloads a checkpoint.
 
-**A first version could be:** one arena and a `settings.ini` switch that starts
-there. Code added to the port watches the spawners. When a wave is cleared, it
-resets them with a bigger count and higher difficulty, shows "Wave N" and the
-time, and when you die it shows how far you got instead of reloading a
-checkpoint.
-
-**Hard parts:**
-- The arena's own level script may lock doors, start cutscenes or end the fight
-  on its own. We need arenas where it doesn't, or a way to switch the script off.
-- Each area probably loads only its own enemies' models, so mixing enemy types
-  may need arenas that already contain them.
-- Dying normally reloads the last checkpoint. The mode has to catch that.
-- Booting straight into an area with `-bypass` sometimes doesn't give you
-  control of Nevin (seen in L02_A1), so starting the mode may need a fix there
-  first.
-- Scores have nowhere to be saved or shown except a file or the screen.
-
-**Feasibility:** a rough version (endless waves in one arena) looks plausible.
-A full Bloody Palace, with floors, different arenas, bosses, rewards and a menu
-entry, is a big project. New Game+ (built first) found most of what it needs:
-calling the game's script functions from the port, catching menu choices, and
-reading and writing Nevin's state.
+**First milestone:** a Survival entry on the main menu puts a fully upgraded
+Nevin into the L05_A3 boss arena, switches on one of its spawners and shows
+"Wave 1". About 2-3 hours. Waves, harder waves, the end screen and more arenas
+follow once that works.
 
 ## Performance
 
