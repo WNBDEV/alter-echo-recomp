@@ -88,6 +88,7 @@ if [ -f "$SETTINGS" ]; then
             camera_flip_x)         var=RECOMP_CAMERA_FLIP_X ;;
             camera_flip_y)         var=RECOMP_CAMERA_FLIP_Y ;;
             mouse_deadzone)        var=RECOMP_MOUSE_DEADZONE ;;
+            new_game_plus)         var=RECOMP_NEW_GAME_PLUS ;;
             bind_*)                var="RECOMP_BIND_$(printf '%s' "${key#bind_}" | tr a-z A-Z)" ;;
             *) echo "settings.ini: unknown setting '$key' (ignored)" >&2; continue ;;
         esac

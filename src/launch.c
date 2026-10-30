@@ -138,6 +138,7 @@ static const struct { const char *key, *var; } s_settings[] = {
     { "camera_flip_x",         "RECOMP_CAMERA_FLIP_X" },
     { "camera_flip_y",         "RECOMP_CAMERA_FLIP_Y" },
     { "mouse_deadzone",        "RECOMP_MOUSE_DEADZONE" },
+    { "new_game_plus",         "RECOMP_NEW_GAME_PLUS" },
 };
 
 static char s_warnings[1024];

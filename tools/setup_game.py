@@ -49,7 +49,7 @@ WINDOWS = os.name == "nt"
 # checkout is never changed, only checked: it must contain this commit (a
 # later one on the same branch is fine).
 TOOLKIT_URL = os.environ.get("TOOLKIT_URL", "https://github.com/WNBDEV/xboxrecomp.git")
-TOOLKIT_COMMIT = "3205fe360125ab59095c21b89644ed865f69f065"
+TOOLKIT_COMMIT = "b39e21a179e10adcdf6b7f36ea8c00d4f4c33370"
 
 # The release everything here was made against: Alter Echo, NTSC, version 1.
 # The function list, the fixes and the addresses in the notes are specific to
@@ -236,6 +236,10 @@ def run_logged(cmd, cwd, log):
         fail("%s failed; see %s" % (" ".join(os.path.basename(c) for c in cmd[:3]), log))
 
 
+# The project files that wrap translated functions (sub_X calling sub_X_gen).
+MANUAL_WRAPS = ("module_loader.c", "game_args.c", "extras/new_game_plus.c")
+
+
 def translate(T, py):
     """default.xbe plus every runtime-loaded module, to C in src/recomp/gen.
 
@@ -243,11 +247,12 @@ def translate(T, py):
        src/module_layout.c (needs modules/ from tools/extract_modules.py);
     2. the pipeline on that XBE, with the module sections as extra code
        sections and the engine and module seeds merged;
-    3. tools.recomp with --exclude-manual on src/module_loader.c and
-       src/game_args.c (joined: it takes one file), so the functions they wrap
-       (sub_0011D860, the module loader; sub_000164F0, the command-line parser)
-       are emitted as sub_X_gen, and --manual-functions for the modules'
-       import thunk slots, which src/module_thunks.c defines."""
+    3. tools.recomp with --exclude-manual on src/module_loader.c,
+       src/game_args.c and the extras' hooks (joined: it takes one file), so
+       the functions they wrap (sub_0011D860, the module loader; sub_000164F0,
+       the command-line parser; New Game+'s) are emitted as sub_X_gen, and
+       --manual-functions for the modules' import thunk slots, which
+       src/module_thunks.c defines."""
     X = os.path.join(P, "build-modules", "default_modules.xbe")
     L = os.path.join(P, "logs")
     B = os.path.join(P, "build-modules")
@@ -295,7 +300,7 @@ def translate(T, py):
     shutil.rmtree(new, ignore_errors=True)
     os.makedirs(new)
     with open(os.path.join(B, "manual_wraps.c"), "wb") as w:
-        for f in ("module_loader.c", "game_args.c"):
+        for f in MANUAL_WRAPS:
             with open(os.path.join(P, "src", f), "rb") as r:
                 w.write(r.read())
     run_logged([py, "-m", "tools.recomp", X, "--all", "--split", "250", "--gen-dir", new,
@@ -461,7 +466,7 @@ def translation_key(proj, toolkit):
     for rel, full in _files(toolkit, "tools"):
         with open(full, "rb") as f:
             add("toolkit/" + rel, f.read())
-    for rel in ("tools", "seed_functions.json", "src/module_loader.c", "src/game_args.c"):
+    for rel in ("tools", "seed_functions.json") + tuple("src/" + f for f in MANUAL_WRAPS):
         for r, full in _files(proj, rel):
             if r != "tools/setup_game.py":
                 with open(full, "rb") as f:

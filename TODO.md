@@ -7,7 +7,7 @@ from zero. If you run into one of these, or something new, see
 
 ## Contents
 
-- [New features](#new-features): how extras are added, widescreen follow-ups, New Game+, a survival mode
+- [New features](#new-features): how extras are added, widescreen follow-ups, New Game+ difficulty, a survival mode
 - [Performance](#performance)
 - [Polish](#polish)
 - [Platforms and installers](#platforms-and-installers)
@@ -53,41 +53,23 @@ constant turned out to be shared with unrelated maths. What could come next:
   testing; if something appears late at the sides, its culling field of view
   is the place to widen.
 
-### New Game+
+### New Game+: tougher enemies
 
-A fresh campaign from the first level that keeps your upgrades, forms and money
-from a finished save.
+New Game+ is built (fix 75 in [DEVLOG.md](DEVLOG.md), README: Extras). It
+starts at L00_Master, past the tutorial, with every upgrade you paid for.
+Enemies are as tough as in the original, so with everything bought it is an
+easy run. New Game+ campaigns should always be harder, with no setting.
 
-**What's known:** the game already has most of the pieces.
-- Its scripts can grant and take away abilities:
-  `SA_Player_Upgrade_GivePlayerGunFormUpgrades`, the stealth-form version, the
-  matching take-away functions, `SA_Player_AddMoney` and
-  `SA_Morph_AddPlayerMorphForm`.
-- The developer switch `-allmorphs` unlocks every form at the start, so the game
-  already copes with a player who has everything early.
-- Starting a new campaign at a chosen level already works (`RECOMP_ARGS`).
+**What's known:** the engine has its own enemy difficulty, an `enemy_difficulty`
+value that level scripts set per enemy group (`SA_Squad_SetDefaultDifficulty`,
+`SA_Squad_SetObjectDifficulty`), and a damage hook (`SA_Combat_ModifyDamage`).
 
 **Plan:**
-1. Find where your upgrades, time-dilation meter and money live, both in memory
-   and in the save file.
-2. Add a `settings.ini` option, something like `new_game_plus = <save slot>`.
-   When you start a new game, it copies those values from that save and saves
-   into a new slot, leaving the finished save alone.
-3. Play through the first few areas to check that nothing breaks.
-
-**Risks:**
-- **Story scripts:** early levels hand out abilities and run tutorials, and some
-  scripts take abilities away. A script that expects you not to have a form yet
-  could misbehave. Only a play-through will show.
-- **Difficulty:** enemies won't get tougher on their own. The game has a damage
-  hook (`SA_Combat_ModifyDamage`) and per-enemy difficulty
-  (`SA_Squad_SetObjectDifficulty`), so tougher enemies are possible as a second
-  step.
-- **A "New Game+" entry in the main menu** is harder than a setting, because the
-  menus come from the game's data files.
-
-**Feasibility:** good odds for the `settings.ini` version. It's a few sessions
-of work, mostly testing by playing.
+1. Find what each `enemy_difficulty` level changes and whether one above what
+   the retail game uses exists. If so, New Game+ uses it: the developers' own
+   tuning.
+2. If not, enemies hit harder across the board through the damage path,
+   starting around 1.5x, tuned by playing.
 
 ### Survival mode (like Devil May Cry 4's Bloody Palace)
 
@@ -128,9 +110,9 @@ checkpoint.
 
 **Feasibility:** a rough version (endless waves in one arena) looks plausible.
 A full Bloody Palace, with floors, different arenas, bosses, rewards and a menu
-entry, is a big project. It's harder than New Game+, and New Game+ builds the
-skills it needs (finding the player's data, calling the game's script functions
-from the port), so New Game+ would come first.
+entry, is a big project. New Game+ (built first) found most of what it needs:
+calling the game's script functions from the port, catching menu choices, and
+reading and writing Nevin's state.
 
 ## Performance
 

@@ -69,6 +69,8 @@ shader-cache/
 
 # Per-player settings (settings.example.ini is the template)
 settings.ini
+# New Game+'s note of its saves (src/extras/new_game_plus.c)
+new_game_plus.txt
 
 # Unpacked game files (setup.sh) and a local Python environment
 game-files/

@@ -34,6 +34,7 @@ not an emulator: the game's code runs as ordinary PC code.
 - [Playing](#playing)
 - [Controls](#controls)
 - [Settings](#settings)
+- [Extras (not part of the original game)](#extras-not-part-of-the-original-game)
 - [Troubleshooting](#troubleshooting)
 - [Reporting a problem](#reporting-a-problem)
 - [Known limits](#known-limits)
@@ -311,6 +312,27 @@ Key names: `A`-`Z`, `0`-`9`, `F3`-`F10`, `F12`, `Space`, `Enter`, `Escape`,
 | Setting | Default | What it does |
 |---|---|---|
 | `direct_render_targets` | `1` | Set to `0` only if a glow, sky or water effect looks broken |
+
+## Extras (not part of the original game)
+
+Extras add gameplay that Alter Echo never had. Each one is off until you turn
+it on in `settings.ini`; with every extra off, the game plays exactly as the
+original.
+
+### New Game+
+
+`new_game_plus = 1` adds **New Game Plus** to the main menu, under Load Game. It
+opens the Load Game screen: pick a save, and a new campaign starts with that
+save's money. It skips the tutorial and starts where Paavo strips Nevin of his
+forms, at the end of the prologue. You keep every upgrade you paid for: your
+sword, your guns and your health and time dilation upgrades from the start,
+and the gun and stealth forms' upgrades as soon as the story gives you each
+form again. The save you picked is left alone. You save as usual, into a slot
+you choose.
+
+New Game+ remembers its saves in `new_game_plus.txt` next to `settings.ini`,
+so loading one later keeps bringing upgrades back. Deleting that file only
+stops that; the saves themselves still load.
 
 ## Troubleshooting
 
