@@ -7,7 +7,7 @@ from zero. If you run into one of these, or something new, see
 
 ## Contents
 
-- [New features](#new-features): how extras are added, widescreen follow-ups, tuning New Game+ tiers, a survival mode
+- [New features](#new-features): how extras are added, widescreen follow-ups, tuning New Game+ tiers and marking its saves, spending money on New Game+, a survival mode
 - [Performance](#performance)
 - [Polish](#polish)
 - [Platforms and installers](#platforms-and-installers)
@@ -21,10 +21,10 @@ from zero. If you run into one of these, or something new, see
 The port stays the original game. Gameplay that the original doesn't have,
 like New Game+ and the survival mode, is an extra (decided 29 Oct 2026):
 
-- **Off by default.** The player turns an extra on with a `settings.ini` option
-  or starts it from its own menu or Start Menu entry. With every extra off, the
-  game plays exactly as the original. Display options like widescreen aren't
-  extras.
+- **The original game unless the player picks it.** An extra starts from its
+  own menu or Start Menu entry, with no setting to turn it on (decided 30 Oct
+  2026: players want plug and play). One that would change the normal game
+  instead is off by default. Display options like widescreen aren't extras.
 - **Its own code**, under `src/extras/`, one file or folder per extra. It hooks
   into the port in as few places as possible, so the port itself stays easy to
   read.
@@ -61,6 +61,32 @@ numbers come from a few measured hits (a Plastid's 5, late-game shots of 2 and
 10-12); the high tiers need playing to tune, and bosses were not measured.
 Ideas left for the top tiers, not agreed: less healing, time dilation draining
 faster.
+
+The Load Game list shows only the area a save is in, so a New Game+ save looks
+like a normal one until it loads and the "New Game Plus N" banner shows. Marking
+them in the list (the tier next to the name) would need the Load Game screen
+worked out first.
+
+### New Game+: something to spend money on
+
+On New Game+ every upgrade is often already bought, but money keeps coming in
+with nothing to spend it on (the player, 30 Oct 2026). Options, best first:
+
+1. **Cut upgrades.** Check the shop's 50 upgrade slots and the game's strings
+   for upgrades that were cut but left in the data, like the cut "arena" menu
+   entry New Game+ reuses. Bringing one back is the most faithful option.
+2. **Cosmetics**, for example tints or effects for Nevin or his sword. They
+   don't touch the New Game+ difficulty, but each needs the game's materials
+   or effects worked out.
+3. **Money carried into the survival mode** (below): start a run better
+   equipped, or buy a continue.
+4. **More damage or more health for Nevin.** Easiest to build, but both work
+   against the harder tiers: extra health divides a tier's harder hits back
+   out just as extra damage shortens the fights. More health could work if it
+   is bought again each campaign and resets at the next tier, so a new tier
+   still bites at first.
+
+Not started; option 1 is a quick check of the data before choosing.
 
 ### Survival mode (like Devil May Cry 4's Bloody Palace)
 

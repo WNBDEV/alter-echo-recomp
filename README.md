@@ -315,16 +315,15 @@ Key names: `A`-`Z`, `0`-`9`, `F3`-`F10`, `F12`, `Space`, `Enter`, `Escape`,
 
 ## Extras (not part of the original game)
 
-Extras add gameplay that Alter Echo never had. Each one is off until you turn
-it on in `settings.ini`; with every extra off, the game plays exactly as the
-original.
+Extras add gameplay that Alter Echo never had. Each one starts from its own
+menu entry, so the game plays exactly as the original unless you pick it.
 
 ### New Game+
 
-`new_game_plus = 1` adds **New Game Plus** to the main menu, under Load Game. It
-opens the Load Game screen: pick a save, and a new campaign starts with that
-save's money. It skips the tutorial and starts where Paavo strips Nevin of his
-forms, at the end of the prologue. You keep every upgrade you paid for: your
+Once you have a save from the game's last area, **New Game Plus** appears in
+the main menu, under Load Game. It opens the Load Game screen: pick a save,
+and a new campaign starts with that save's money. It skips the tutorial and
+starts where Paavo strips Nevin of his forms, at the end of the prologue. You keep every upgrade you paid for: your
 sword, your guns and your health and time dilation upgrades from the start,
 and the gun and stealth forms' upgrades as soon as the story gives you each
 form again. The save you picked is left alone. You save as usual, into a slot
@@ -332,8 +331,9 @@ you choose.
 
 **Every hit on Nevin is harder, and more so each time round.** Finish a New
 Game Plus campaign (pick a save from the game's last area) and the next one is
-a tier higher, from New Game Plus 1 up to 9; the tier shows on screen as a
-campaign starts. Enemies keep their health; only the damage you take goes up,
+a tier higher, from New Game Plus 1 up to 9. "New Game Plus" and the tier show
+on screen as a campaign starts and each time you load one of its saves, so you
+can tell those saves from normal ones. Enemies keep their health; only the damage you take goes up,
 by 2x, 2.5x, 3x, 3.5x, 4.5x, 5.5x, 6.5x, 8x and 10x for tiers 1 to 9. With
 your armour, tier 1 hits as hard as a first playthrough; at tier 9 a heavy hit
 takes half your health. No single hit takes more than half your health unless

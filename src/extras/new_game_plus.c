@@ -1,8 +1,10 @@
 /*
  * New Game+ -- an extra, not part of the original game.
  *
- * Off unless settings.ini has new_game_plus = 1 (RECOMP_NEW_GAME_PLUS=1).
- * Then the main menu has a New Game+ entry under Load Game. It opens the
+ * Once a save from the final area is on disk, the main menu has a New Game+
+ * entry under Load Game; until then the menu is the original's. Nothing
+ * else changes unless that entry is picked (new_game_plus = 0 in
+ * settings.ini, RECOMP_NEW_GAME_PLUS=0, takes it away). It opens the
  * game's own Load Game screen; the save picked there starts a new campaign
  * with that save's money, and every upgrade that save owned comes back as
  * the story makes it available again. It starts at L00_Master, the
@@ -55,7 +57,8 @@
  * Tiers: a campaign started from a save in the final area (L09_A9) of a New
  * Game +N campaign is +N+1, up to +9; from any other save it stays at that
  * save's tier (a normal save counts as 0, and the lowest tier is +1). The
- * tier shows on screen as the campaign starts, through the game's own screen
+ * tier shows on screen as the campaign starts and when one of its saves is
+ * loaded (the Load Game list cannot tell them from normal saves), through the game's own screen
  * text (SA_ScreenText_*, strings 0x53B8 and 0x5C15, a space).
  *
  * Every hit on Nevin is harder by the tier's factor (TIER_DAMAGE): all damage
@@ -72,6 +75,7 @@
  * settings.ini, with their tier, so loading one later carries on.
  */
 #include <xbox/xboxrecomp.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -119,6 +123,7 @@ extern int guest_vmem_allocate(uint32_t *base, uint32_t *size,
 #define OBJ_MAXHP   0xBC
 #define HEAL        5           /* attack type (+0x1C) that heals */
 #define NOTES_FILE  "new_game_plus.txt"
+#define SAVES_DIR   "game/UDATA/5451000f"   /* a folder per save (main.c's game dir) */
 #define MAX_NOTES   64
 
 static int s_enabled = -1;
@@ -141,9 +146,9 @@ static int enabled(void)
 {
     if (s_enabled < 0) {
         const char *e = getenv("RECOMP_NEW_GAME_PLUS");
-        s_enabled = e && atoi(e) > 0;
-        if (s_enabled) {
-            fprintf(stderr, "[NG+] New Game+ is on (settings.ini new_game_plus)\n");
+        s_enabled = !e || !*e || atoi(e) > 0;
+        if (!s_enabled) {
+            fprintf(stderr, "[NG+] New Game+ is off (settings.ini new_game_plus = 0)\n");
             fflush(stderr);
         }
     }
@@ -632,6 +637,52 @@ static void add_entry(void)
     fflush(stderr);
 }
 
+/* Take the entry out again (the finished save is gone). */
+static void remove_entry(void)
+{
+    uint32_t m = menu(MAIN_MENU), count, i;
+
+    if (!m)
+        return;
+    count = G32(m + 4);
+    for (i = 0; i < count && G32(m + 8 + 4 * i) != CODE_NGP; i++)
+        ;
+    if (i == count)
+        return;
+    for (; i + 1 < count; i++)
+        G32(m + 8 + 4 * i) = G32(m + 8 + 4 * (i + 1));
+    G32(m + 4) = --count;
+    if (count && G32(m) >= count)
+        G32(m) = count - 1;
+}
+
+/* The entry shows once the game has been finished: a save from the final
+ * area is on disk. Each save is a folder of SAVES_DIR, its game.dat starting
+ * with the area index. */
+static int finished_save_exists(void)
+{
+    DIR *d = opendir(SAVES_DIR);
+    struct dirent *e;
+    int found = 0;
+
+    if (!d)
+        return 0;
+    while (!found && (e = readdir(d)) != NULL) {
+        char path[512];
+        uint32_t area;
+        FILE *f;
+        if (e->d_name[0] == '.')
+            continue;
+        snprintf(path, sizeof path, "%s/%s/game.dat", SAVES_DIR, e->d_name);
+        if ((f = fopen(path, "rb")) != NULL) {
+            found = fread(&area, 4, 1, f) == 1 && area == FINAL_AREA;
+            fclose(f);
+        }
+    }
+    closedir(d);
+    return found;
+}
+
 /* sub_000B5CA0: the main menu is entered. */
 extern void sub_000B5CA0_gen(void);
 void sub_000B5CA0(void)
@@ -641,7 +692,16 @@ void sub_000B5CA0(void)
         return;
     s_picking = 0;
     set_text();
-    add_entry();
+    if (finished_save_exists()) {
+        add_entry();
+    } else {
+        static int told;
+        remove_entry();
+        if (!told++) {
+            fprintf(stderr, "[NG+] no save from the final area yet: no New Game+ entry\n");
+            fflush(stderr);
+        }
+    }
 }
 
 /* sub_000B5750: the main menu's input (menu states 1, 3, 4 and 5; 5 has its
