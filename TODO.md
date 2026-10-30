@@ -9,7 +9,7 @@ from zero. If you run into one of these, or something new, see
 
 - [New features](#new-features): how extras are added, widescreen follow-ups, tuning New Game+ tiers and marking its saves, spending money on New Game+, a survival mode
 - [Performance](#performance)
-- [Polish](#polish)
+- [Polish](#polish): health bar lines, the blocky sync node effect
 - [Platforms and installers](#platforms-and-installers)
 - [Toolkit](#toolkit)
 - [Reports wanted](#reports-wanted)
@@ -170,6 +170,25 @@ Two 1-pixel vertical lines at about 1/5 and 4/5 of the health bar's width, at bo
 1x and 2x. They are probably seams where the bar's pieces meet
 (texture edges or clamping). Not yet compared against xemu or a real Xbox.
 
+### Blocky sync node effect at the end of L02_A1
+
+Activating a sync node shows a wavy effect (Nevin shaping the echo plasm). At the
+last sync node of L02_A1, right at the end of the mission, it looked boxy and
+rectangular instead (the player, native Linux build, 30 Oct 2026). No screenshot,
+and no save near it: seeing it again means playing the mission through. Not
+caused by New Game+: the renderer is unchanged since 1.1.2.
+
+**What's known:** nothing unusual in the log. Two small render targets appeared
+mid-level then (96x96 and 192x192), and the renderer draws at twice the console's
+resolution. Suspects: one of those small targets drawn stretched with no
+filtering, or copied from the wrong place at 2x. Not ruled out: widescreen's
+wider view on an effect drawn in screen space, or the original looking like
+this.
+
+**Next:** whoever plays that far again, take a screenshot (or a few). Comparing
+earlier sync nodes, and the same node with `widescreen = 0`, would narrow it
+down.
+
 ## Platforms and installers
 
 - **Windows on a real PC:** the installer and the game it builds have only been
@@ -190,7 +209,7 @@ Two 1-pixel vertical lines at about 1/5 and 4/5 of the health bar's width, at bo
 
 ### Faster installs
 
-**Done for 1.1.2 (fix 74, not released yet).** A clean Linux install on the
+**Done in 1.1.2 (fix 74).** A clean Linux install on the
 same PC (i7-4790K, 4 cores and 8 threads, 16 GB) went from about 20 minutes to
 11.7:
 
@@ -207,10 +226,10 @@ thermal throttling. A newer PC with more cores should gain much more, but
 that is not measured.
 
 An update that changes only the translator now keeps every translated file
-that comes out the same, so it compiles none of them again. Updating 1.1.1 to
-1.1.2 should take about 4-5 minutes, not a full build: a translator change
-tried on the test install took 4.3 minutes, kept all 62 translated files and
-compiled 2 small files.
+that comes out the same, so it compiles none of them again: updating 1.1.1 to
+1.1.2 took 4.3 minutes, keeping all 62 translated files and compiling 2 small
+ones. An update that changes the translated code itself still compiles all of
+it: 1.1.2 to 1.2.0 (New Game+) took 11 minutes.
 
 **Still open:**
 - Translating still runs on one core for about 4 minutes. Most of that is
