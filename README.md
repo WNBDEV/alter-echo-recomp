@@ -330,9 +330,17 @@ and the gun and stealth forms' upgrades as soon as the story gives you each
 form again. The save you picked is left alone. You save as usual, into a slot
 you choose.
 
-New Game+ remembers its saves in `new_game_plus.txt` next to `settings.ini`,
-so loading one later keeps bringing upgrades back. Deleting that file only
-stops that; the saves themselves still load.
+**Every hit on Nevin is harder, and more so each time round.** Finish a New
+Game Plus campaign (pick a save from the game's last area) and the next one is
+a tier higher, from New Game Plus 1 up to 9; the tier shows on screen as a
+campaign starts. Enemies keep their health; only the damage you take goes up,
+by 2x, 2.5x, 3x, 3.5x, 4.5x, 5.5x, 6.5x, 8x and 10x for tiers 1 to 9. With
+your armour, tier 1 hits as hard as a first playthrough; at tier 9 a heavy hit
+takes half your health. No single hit takes more than half your health unless
+it already did in the original game.
+
+New Game+ remembers its saves and their tier in `new_game_plus.txt` next to
+`settings.ini`. Deleting that file makes those saves ordinary ones again.
 
 ## Troubleshooting
 

@@ -7,7 +7,7 @@ from zero. If you run into one of these, or something new, see
 
 ## Contents
 
-- [New features](#new-features): how extras are added, widescreen follow-ups, New Game+ difficulty, a survival mode
+- [New features](#new-features): how extras are added, widescreen follow-ups, tuning New Game+ tiers, a survival mode
 - [Performance](#performance)
 - [Polish](#polish)
 - [Platforms and installers](#platforms-and-installers)
@@ -53,23 +53,14 @@ constant turned out to be shared with unrelated maths. What could come next:
   testing; if something appears late at the sides, its culling field of view
   is the place to widen.
 
-### New Game+: tougher enemies
+### New Game+: tuning the tiers
 
-New Game+ is built (fix 75 in [DEVLOG.md](DEVLOG.md), README: Extras). It
-starts at L00_Master, past the tutorial, with every upgrade you paid for.
-Enemies are as tough as in the original, so with everything bought it is an
-easy run. New Game+ campaigns should always be harder, with no setting.
-
-**What's known:** the engine has its own enemy difficulty, an `enemy_difficulty`
-value that level scripts set per enemy group (`SA_Squad_SetDefaultDifficulty`,
-`SA_Squad_SetObjectDifficulty`), and a damage hook (`SA_Combat_ModifyDamage`).
-
-**Plan:**
-1. Find what each `enemy_difficulty` level changes and whether one above what
-   the retail game uses exists. If so, New Game+ uses it: the developers' own
-   tuning.
-2. If not, enemies hit harder across the board through the damage path,
-   starting around 1.5x, tuned by playing.
+New Game Plus 1 to 9 is built (fix 77 in [DEVLOG.md](DEVLOG.md)): every hit on
+Nevin is 2x to 10x harder, never more than half his health in one hit. The
+numbers come from a few measured hits (a Plastid's 5, late-game shots of 2 and
+10-12); the high tiers need playing to tune, and bosses were not measured.
+Ideas left for the top tiers, not agreed: less healing, time dilation draining
+faster.
 
 ### Survival mode (like Devil May Cry 4's Bloody Palace)
 

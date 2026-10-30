@@ -52,8 +52,24 @@
  * is a cut entry ("arena", string 0x53B8): picking it only plays the menu
  * sound. New Game+ is that entry with its text replaced.
  *
+ * Tiers: a campaign started from a save in the final area (L09_A9) of a New
+ * Game +N campaign is +N+1, up to +9; from any other save it stays at that
+ * save's tier (a normal save counts as 0, and the lowest tier is +1). The
+ * tier shows on screen as the campaign starts, through the game's own screen
+ * text (SA_ScreenText_*, strings 0x53B8 and 0x5C15, a space).
+ *
+ * Every hit on Nevin is harder by the tier's factor (TIER_DAMAGE): all damage
+ * goes through one hit handler, sub_0009E1A0, which works out damage = scale
+ * (its 7th argument) * the attack's damage (+4), times Nevin's armour
+ * (0x2500E8: 1.0 less 0.125 per armour upgrade, slots 36-39) when he is the
+ * target. New Game+ multiplies the scale before the handler runs, so the
+ * game's own death and damage handling sees the final hit, but never pushes
+ * a hit past half of Nevin's health (100) unless the original hit was
+ * already bigger. Enemies keep their health. Measured: a Plastid hit is 5,
+ * late-game shots 2 (rapid) and 10-12, before armour.
+ *
  * Saves made in a New Game+ campaign are noted in new_game_plus.txt next to
- * settings.ini, so loading one later carries on bringing upgrades back.
+ * settings.ini, with their tier, so loading one later carries on.
  */
 #include <xbox/xboxrecomp.h>
 #include <stdio.h>
@@ -68,6 +84,7 @@ extern int guest_vmem_allocate(uint32_t *base, uint32_t *size,
 #define GBYTES(va) ((uint8_t *)((uintptr_t)(uint32_t)(va) + (uintptr_t)xbox_GetMemoryOffset()))
 #define G32(va)  (*(uint32_t *)GBYTES(va))
 #define G8(va)   (*GBYTES(va))
+#define GF(va)   (*(float *)GBYTES(va))
 
 #define MONEY       0x25014Cu
 #define SLOTS       0x546F38u
@@ -95,12 +112,29 @@ extern int guest_vmem_allocate(uint32_t *base, uint32_t *size,
 #define SLOT_SWORD1 42          /* 42, 43, 44: sword types 1, 2, 3 */
 #define SLOT_GUN0   45          /* 45-48: guns 0-3 */
 
+#define FINAL_AREA  50          /* L09_A9: a save there finished the game */
+#define MAX_TIER    9
+#define PLAYER      0x2500A0u   /* Nevin's object */
+#define ARMOUR      0x2500E8u   /* float: damage taken, 0.5-1.0 */
+#define OBJ_MAXHP   0xBC
+#define HEAL        5           /* attack type (+0x1C) that heals */
 #define NOTES_FILE  "new_game_plus.txt"
 #define MAX_NOTES   64
 
 static int s_enabled = -1;
 static int s_picking;           /* Load Game was opened from New Game+ */
 static int s_active;            /* this campaign is a New Game+ one */
+static int s_tier;              /* ... and its tier, 1-9 */
+static int s_banner;            /* show "New Game Plus N" at the next start: */
+static int s_banner_armed;      /* ... the area has started; waits for play */
+static uint32_t s_text;         /* guest page: L"New Game Plus" at +0, 1 = none */
+
+/* How much harder each tier hits: about 22% more per tier, from as hard as
+ * a first playthrough with full armour (+1) to heavy hits taking half the
+ * health bar (+9). */
+static const float TIER_DAMAGE[MAX_TIER + 1] = {
+    1.0f, 2.0f, 2.5f, 3.0f, 3.5f, 4.5f, 5.5f, 6.5f, 8.0f, 10.0f
+};
 static unsigned char s_owned[NSLOTS];
 
 static int enabled(void)
@@ -146,6 +180,7 @@ typedef struct {
     int area, money;
     char slots[NSLOTS + 1];     /* the save's slots, '0'..'2' */
     char owned[NSLOTS + 1];     /* what the campaign brings back, '0'/'1' */
+    int tier;
 } Note;
 
 static Note s_notes[MAX_NOTES];
@@ -164,9 +199,13 @@ static void notes_load(void)
         return;
     while (s_nnotes < MAX_NOTES && fgets(line, sizeof line, f)) {
         Note *n = &s_notes[s_nnotes];
-        if (line[0] != '#' && sscanf(line, "%d %d %50s %50s", &n->area,
-                                     &n->money, n->slots, n->owned) == 4
-                && strlen(n->slots) == NSLOTS && strlen(n->owned) == NSLOTS)
+        int k;
+        n->tier = 1;            /* notes from before tiers */
+        if (line[0] != '#'
+                && ((k = sscanf(line, "%d %d %50s %50s %d", &n->area, &n->money,
+                                n->slots, n->owned, &n->tier)) == 4 || k == 5)
+                && strlen(n->slots) == NSLOTS && strlen(n->owned) == NSLOTS
+                && n->tier >= 1 && n->tier <= MAX_TIER)
             s_nnotes++;
     }
     fclose(f);
@@ -181,12 +220,12 @@ static void notes_save(void)
         fprintf(stderr, "[NG+] cannot write %s\n", NOTES_FILE);
         return;
     }
-    fprintf(f, "# New Game+ saves: area money slots owned. Written by the "
-               "game; deleting this file\n# only stops those saves bringing "
-               "upgrades back.\n");
+    fprintf(f, "# New Game+ saves: area money slots owned tier. Written by "
+               "the game; deleting this file\n# makes those saves plain "
+               "ones again.\n");
     for (i = 0; i < s_nnotes; i++)
-        fprintf(f, "%d %d %s %s\n", s_notes[i].area, s_notes[i].money,
-                s_notes[i].slots, s_notes[i].owned);
+        fprintf(f, "%d %d %s %s %d\n", s_notes[i].area, s_notes[i].money,
+                s_notes[i].slots, s_notes[i].owned, s_notes[i].tier);
     fclose(f);
 }
 
@@ -226,8 +265,9 @@ static void note_record(uint32_t rec)
     for (i = 0; i < NSLOTS; i++)
         n.owned[i] = s_owned[i] ? '1' : '0';
     n.owned[NSLOTS] = 0;
+    n.tier = s_tier;
     if ((old = note_find(n.area, n.money, n.slots)) != NULL
-            && !strcmp(old->owned, n.owned))
+            && !strcmp(old->owned, n.owned) && old->tier == n.tier)
         return;
     if (old) {
         *old = n;
@@ -340,12 +380,24 @@ void sub_000189D0(void)
     }
     s_picking = 0;
     if (picked) {
-        int n = 0;
+        int n = 0, from = 0, area = (int)G32(rec + REC_AREA);
+        char slots[NSLOTS + 1];
+        Note *note;
+        notes_load();
+        slots_text(slots, rec + REC_SLOTS);
+        if ((note = note_find(area, (int)G32(rec + REC_MONEY), slots)) != NULL)
+            from = note->tier;
+        s_tier = area >= FINAL_AREA ? from + 1 : from;
+        if (s_tier < 1)
+            s_tier = 1;
+        if (s_tier > MAX_TIER)
+            s_tier = MAX_TIER;
         for (i = 0; i < NSLOTS; i++)
             n += s_owned[i] = G32(rec + REC_SLOTS + 4 * i) == 2;
         s_active = 1;
-        fprintf(stderr, "[NG+] new campaign from a save in area %u: %d owned "
-                "upgrade(s), money %d\n", G32(rec + REC_AREA), n,
+        s_banner = 1;
+        fprintf(stderr, "[NG+] New Game Plus %d, from a save in area %d (tier "
+                "%d): %d owned upgrade(s), money %d\n", s_tier, area, from, n,
                 (int)G32(rec + REC_MONEY));
         fflush(stderr);
         G32(rec + REC_AREA) = START_AREA;
@@ -359,6 +411,8 @@ void sub_000189D0(void)
         s_active = note != NULL;
         if (note) {
             uint32_t gun = G32(rec + REC_GUN);
+            s_tier = note->tier;
+            s_banner = 1;
             for (i = 0; i < NSLOTS; i++)
                 s_owned[i] = note->owned[i] == '1';
             uint32_t t;
@@ -369,8 +423,8 @@ void sub_000189D0(void)
             G32(rec + REC_SWORD) = t;
             if (gun > 3 || !owned_now(rec + REC_SLOTS, SLOT_GUN0 + (int)gun))
                 G32(rec + REC_GUN) = 0;
-            fprintf(stderr, "[NG+] loaded a New Game+ save (sword type %u, "
-                    "gun %u)\n", G32(rec + REC_SWORD), G32(rec + REC_GUN));
+            fprintf(stderr, "[NG+] loaded a New Game Plus %d save (sword type "
+                    "%u, gun %u)\n", s_tier, G32(rec + REC_SWORD), G32(rec + REC_GUN));
             fflush(stderr);
         }
     }
@@ -383,17 +437,129 @@ void sub_000189D0(void)
 /* sub_00018820: build a save record from the game (thiscall, this = the
  * record, one argument: the area name). */
 extern void sub_00018820_gen(void);
+static void show_banner(void);
 void sub_00018820(void)
 {
     uint32_t rec = g_ecx;
     sub_00018820_gen();
     if (s_enabled > 0)
         note_record(rec);
+    /* Built when an area starts (and when saving): from here the banner
+     * waits for the first frame without a cutscene, see sub_000E6760. */
+    if (s_banner && s_active)
+        s_banner_armed = 1;
+}
+
+/* ---- tiers: harder hits and the banner --------------------------------- */
+
+/* Calls into a translated cdecl function with up to four arguments. */
+static void call_cdecl(void (*fn)(void), int n, uint32_t a, uint32_t b,
+                       uint32_t c, uint32_t d)
+{
+    uint32_t args[4] = { a, b, c, d };
+    int i;
+    g_esp -= 4 * (uint32_t)(n + 1);
+    G32(g_esp) = 0;
+    for (i = 0; i < n; i++)
+        G32(g_esp + 4 + 4 * (uint32_t)i) = args[i];
+    fn();                       /* pops the return address */
+    g_esp += 4 * (uint32_t)n;   /* the caller pops the arguments */
+}
+
+static uint32_t fbits(float f)
+{
+    uint32_t u;
+    memcpy(&u, &f, 4);
+    return u;
+}
+
+extern void sub_00164370(void);  /* SA_ScreenText_CreateInstance(int *) */
+extern void sub_00164390(void);  /* SA_ScreenText_SetScreenPos(h, x, y) */
+extern void sub_001643B0(void);  /* SA_ScreenText_ClearString(h) */
+extern void sub_001643C0(void);  /* SA_ScreenText_AppendText(h, string) */
+extern void sub_001643E0(void);  /* SA_ScreenText_AppendInteger(h, n) */
+extern void sub_00164420(void);  /* SA_ScreenText_InitTimers(h, in, out, hold) */
+extern void sub_00164450(void);  /* SA_ScreenText_KillInstance(h) */
+
+#define STR_SPACE   0x5C15u
+
+/* "New Game Plus N" in the middle of the screen for a few seconds, the way
+ * the tutorials show their captions. */
+static void show_banner(void)
+{
+    static uint32_t handle;
+    uint32_t h;
+
+    if (s_text < 2)             /* no guest page: the label was never set */
+        return;
+    if (handle)
+        call_cdecl(sub_00164450, 1, handle, 0, 0, 0);
+    G32(s_text + 0x100) = 0xFFFFFFFFu;
+    call_cdecl(sub_00164370, 1, s_text + 0x100, 0, 0, 0);
+    h = G32(s_text + 0x100);
+    if (h == 0xFFFFFFFFu) {
+        fprintf(stderr, "[NG+] no screen text for the banner\n");
+        return;
+    }
+    handle = h;
+    call_cdecl(sub_001643B0, 1, h, 0, 0, 0);
+    call_cdecl(sub_001643C0, 2, h, STR_ARENA, 0, 0);
+    call_cdecl(sub_001643C0, 2, h, STR_SPACE, 0, 0);
+    call_cdecl(sub_001643E0, 2, h, (uint32_t)s_tier, 0, 0);
+    call_cdecl(sub_00164420, 4, h, fbits(0.5f), fbits(0.5f), fbits(4.0f));
+    call_cdecl(sub_00164390, 3, h, fbits(0.5f), fbits(0.3f), 0);
+    fprintf(stderr, "[NG+] banner: New Game Plus %d\n", s_tier);
+    fflush(stderr);
+}
+
+/* sub_000E6760: the screen text's update, every frame (thiscall, this =
+ * 0x46BDD8). It hides all screen text while a cutscene runs (the object at
+ * 0x1E4A7C is non-zero then), so a banner made as the area starts would
+ * time out unseen behind the arrival cutscene: it goes up on the first frame
+ * of play instead. */
+#define CUTSCENE    0x1E4A7Cu
+extern void sub_000E6760_gen(void);
+void sub_000E6760(void)
+{
+    sub_000E6760_gen();
+    if (s_banner_armed && s_active && G32(CUTSCENE) == 0) {
+        s_banner = s_banner_armed = 0;
+        show_banner();
+    }
+}
+
+/* sub_0009E1A0: the hit handler (cdecl): +4 the object hit, +8 the attack
+ * (+4 its damage, +0x1C its type), +0x1C a float the damage is scaled by. */
+extern void sub_0009E1A0_gen(void);
+void sub_0009E1A0(void)
+{
+    uint32_t sp = g_esp, target, attack;
+
+    if (s_active && s_tier >= 1 && (target = G32(sp + 4)) != 0
+            && target == G32(PLAYER) && (attack = G32(sp + 8)) != 0
+            && G32(attack + 0x1C) != HEAL) {
+        float scale = GF(sp + 0x1C), base = GF(attack + 4);
+        float maxhp = GF(target + OBJ_MAXHP), cap, est, g;
+        cap = 0.5f * (maxhp > 0.0f ? maxhp : 100.0f);
+        est = scale * base * GF(ARMOUR);
+        g = TIER_DAMAGE[s_tier];
+        if (est <= 0.0f || est >= cap)
+            g = 1.0f;           /* nothing to scale, or already past the cap */
+        else if (est * g > cap)
+            g = cap / est;
+        if (g != 1.0f) {
+            GF(sp + 0x1C) = scale * g;
+            if (getenv("RECOMP_NGP_TRACE")) {
+                fprintf(stderr, "[NG+] hit %.2f x%.2f -> %.2f\n", est, g, est * g);
+                fflush(stderr);
+            }
+        }
+    }
+    sub_0009E1A0_gen();
 }
 
 /* ---- the main menu entry ---------------------------------------------- */
 
-static uint32_t s_text;         /* guest address of L"New Game Plus" */
 
 /* Point the cut entry's text (string 0x53B8) at "New Game Plus". */
 static void set_text(void)
