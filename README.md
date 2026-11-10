@@ -342,6 +342,19 @@ it already did in the original game.
 New Game+ remembers its saves and their tier in `new_game_plus.txt` next to
 `settings.ini`. Deleting that file makes those saves ordinary ones again.
 
+### Survival mode
+
+**Survival** in the main menu starts a fight that only ends when Nevin dies.
+He has every upgrade from the start: both forms, the best sword, every gun,
+and all the health and time dilation upgrades. The fight is in Paavo's
+training arena at the end of the prologue, and the enemies come in waves,
+each one bigger than the last, with "Wave" and its number on screen as it
+starts. When Nevin dies, the screen shows the wave you reached and the game
+goes back to the main menu. Nothing is saved, and your saves are not touched.
+
+This is the first version: one arena, with Plastids. More arenas, with the
+enemies of the later chapters, are planned.
+
 ## Troubleshooting
 
 **The mouse doesn't move the camera.** Click inside the game window to capture

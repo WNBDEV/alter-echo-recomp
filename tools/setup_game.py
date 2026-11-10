@@ -237,7 +237,8 @@ def run_logged(cmd, cwd, log):
 
 
 # The project files that wrap translated functions (sub_X calling sub_X_gen).
-MANUAL_WRAPS = ("module_loader.c", "game_args.c", "extras/new_game_plus.c")
+MANUAL_WRAPS = ("module_loader.c", "game_args.c", "extras/new_game_plus.c",
+                "extras/survival.c")
 
 
 def translate(T, py):
@@ -250,7 +251,8 @@ def translate(T, py):
     3. tools.recomp with --exclude-manual on src/module_loader.c,
        src/game_args.c and the extras' hooks (joined: it takes one file), so
        the functions they wrap (sub_0011D860, the module loader; sub_000164F0,
-       the command-line parser; New Game+'s) are emitted as sub_X_gen, and
+       the command-line parser; New Game+'s and survival's) are emitted as
+       sub_X_gen, and
        --manual-functions for the modules' import thunk slots, which
        src/module_thunks.c defines."""
     X = os.path.join(P, "build-modules", "default_modules.xbe")

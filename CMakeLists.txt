@@ -83,9 +83,10 @@ set(GAME_SOURCES
     # Started without a launcher script (Windows double-click): settings, log.
     src/launch.c
     # Extras: gameplay the original doesn't have, each off unless turned on
-    # (README: Extras). New Game+ wraps translated functions, so it is also
-    # in tools/setup_game.py's MANUAL_WRAPS.
+    # (README: Extras). New Game+ and survival wrap translated functions, so
+    # they are also in tools/setup_game.py's MANUAL_WRAPS.
     src/extras/new_game_plus.c
+    src/extras/survival.c
     # Add game-specific sources here, e.g.:
     # src/asset_loader.c
     # src/custom_renderer.c

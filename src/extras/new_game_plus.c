@@ -79,6 +79,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "survival.h"
 
 extern RECOMP_TLS uint32_t g_eax, g_ecx, g_esp;
 extern int guest_vmem_allocate(uint32_t *base, uint32_t *size,
@@ -337,8 +338,10 @@ static void bring_back(const char *why)
 extern void sub_001419F0_gen(void);
 void sub_001419F0(void)
 {
+    uint32_t name = G32(g_esp + 4);
     sub_001419F0_gen();
     bring_back("area loaded");
+    survival_area_loaded(name);
 }
 
 /* sub_00141EB0 / sub_00142000: a script gives the gun / stealth form. */
@@ -363,6 +366,7 @@ extern void sub_000B56B0_gen(void);
 void sub_000B56B0(void)
 {
     s_active = 0;
+    survival_stop();
     sub_000B56B0_gen();
 }
 
@@ -379,6 +383,7 @@ void sub_000189D0(void)
     uint32_t rec = g_ecx;
     int i, picked = s_picking;
 
+    survival_stop();
     if (!enabled()) {
         sub_000189D0_gen();
         return;
@@ -527,6 +532,7 @@ extern void sub_000E6760_gen(void);
 void sub_000E6760(void)
 {
     sub_000E6760_gen();
+    survival_frame();
     if (s_banner_armed && s_active && G32(CUTSCENE) == 0) {
         s_banner = s_banner_armed = 0;
         show_banner();
@@ -688,6 +694,7 @@ extern void sub_000B5CA0_gen(void);
 void sub_000B5CA0(void)
 {
     sub_000B5CA0_gen();
+    survival_menu_enter();
     if (!enabled())
         return;
     s_picking = 0;
@@ -713,7 +720,7 @@ extern void sub_00017850(void);
 void sub_000B5750(void)
 {
     uint32_t m;
-    int fire = 0;
+    int fire = 0, survival = survival_menu_pressed();
 
     if (enabled() && G8(MENU_INPUT) == 1 && (m = menu(MAIN_MENU)) != 0
             && G32(m + 0x48) != 5 && G32(m) < G32(m + 4)
@@ -723,7 +730,10 @@ void sub_000B5750(void)
         fire = (g_eax & 0xFF) != 0;
     }
     sub_000B5750_gen();
-    if (fire) {
+    if (survival) {
+        s_active = s_picking = 0;
+        survival_start();
+    } else if (fire) {
         s_picking = 1;
         call_this1(sub_00017850, MENU_SWITCH, LOAD_GAME);
         fprintf(stderr, "[NG+] pick the save to start New Game+ from\n");

@@ -90,60 +90,57 @@ Not started; option 1 is a quick check of the data before choosing.
 
 ### Survival mode (like Devil May Cry 4's Bloody Palace)
 
-Endless waves of enemies in an arena, getting harder each wave, with a wave
-counter and a timer, until you die.
+Endless waves of enemies, getting harder each wave, with a wave counter and a
+timer, until you die.
 
 **Decided (30 Oct 2026):** Nevin starts fully upgraded (every form, sword,
 gun, health and time dilation upgrade), on no save: no shop, no money, no save
 to pick, and nothing written back to your saves. It starts from its own main
 menu entry, with no setting. Dying shows how far you got (wave reached, time)
-and goes back to the main menu. The first version uses the enemies the arena
-already has.
+and goes back to the main menu. It uses the enemies each arena already has.
 
-**Researched (30 Oct 2026):**
-- **No arena on the disc.** The level files are the 51 story areas and the
-  menu; the main menu's cut "arena" entry only ever played a sound (New Game+
-  now uses it), so survival needs another cut entry (Secrets) for its menu
-  entry.
-- **The arena: Paavo Echo's boss arena in L05_A3** (the player's pick for its
-  shape and design). It already has its own spawners, used for the boss
-  fight's extra enemies: Boss Fodder 1-4, Boss Gun 1, Boss Gunpod 1-3 and
-  Paavo Echo 1-5 (copies of Paavo Echo). Enemy types loaded there: Armadillos,
-  gunpods, gun drones and Paavo Echo. L07_A3, the second Paavo Echo fight, has
-  Boss Fight 1-4, Finale 1-4 and Paavo Echo 1-4, with Arana.
-- **More spawn points:** spawners are placed in the level files, but the
-  engine can create an object of any loaded type anywhere
-  (`SA_Obj_CreateObject`), so the port can add enemies where it likes. Only
-  types the area loads can be used.
-- **More arenas later:** each chapter ends with one of Paavo's training
-  sessions, a "Master" area built as an arena, with a bigger enemy mix each
-  time: L00 (Plastids, 10 spawners), L01 (Plastids, gun drones), L02 (+ a
-  gunpod), L03 (Deflectors, an Armadillo), L04 (Stone, MultiStage), L06
-  (Armadillos, Deflectors, gun drones), L08 (Mimic, Stone, MultiStage). A
-  ready-made ladder of floors.
+**Decided (10 Nov 2026): floors, like Bloody Palace.** An area can only spawn
+the enemy types it loads, and Paavo Echo's boss arena (L05_A3, the first pick)
+has no Plastids. So the floors are Paavo's training sessions, the "Master"
+area that ends each chapter, in story order, each with a few waves: L00
+(Plastids, 10 spawners), L01 (Plastids, gun drones), L02 (+ a gunpod), L03
+(Deflectors, an Armadillo), L04 (Stone, MultiStage), L06 (Armadillos,
+Deflectors, gun drones), L08 (Mimic, Stone, MultiStage). The Paavo Echo arenas
+(L05_A3, with Armadillos, gunpods and gun drones; L07_A3, with Arana) come
+last, like Bloody Palace's boss floors. After the last floor it starts again
+with every hit on Nevin harder each lap (New Game+'s damage code).
 
-The engine's script functions the mode would use, which the port can call
-by name (as New Game+ does):
+**Built: the first floor** (fix 79 in [DEVLOG.md](DEVLOG.md); 10 Nov 2026, not
+yet played by hand). **Survival** on the main menu (the cut Secrets entry)
+starts the game the way Start Game does, with every upgrade, in L00_Master.
+The level script gets only the area's start, so no story plays; Nevin is
+moved to where the story's fight starts, and survival runs the waves through
+the area's own ten Plastid spawners: "Wave N" on screen, each spawner making N
+Plastids (10, 20, 30 in all, at most ten at once), "Wave N cleared", four
+seconds' rest. When Nevin dies: "You reached wave N", then the pause menu's
+way out (unload the area) to the main menu. How the pieces work is in
+`src/extras/survival.c`.
 
-| Need | Engine function |
-|---|---|
-| Spawn enemies | `SA_Matcen_ActivateMatcen`, `SA_Matcen_ResetMatcenLimits`, `SA_Matcen_EnableMatcen`, `SQ_Matcen_GetNumAlive`, `VSS_GetMatcenHandle` (a spawner by name); `SA_Obj_CreateObject` |
-| Make them harder | `SA_Squad_SetObjectDifficulty`, `SA_Command_PaavoEchoSetDifficultyLevel` |
-| Wave number and timer on screen | `SA_ScreenText_*` (New Game+'s banner uses it) and `SA_Timer_*` |
-| Refills between waves | time dilation and invulnerability power-ups |
-
-**Open questions:**
-- How to put Nevin straight into the boss arena: the level starts elsewhere.
-- Keeping the boss fight's own script from starting the fight (and Paavo
-  Echo) on its own, or using it as the last wave.
-- How a level script starts and ends its fights: booting a training session
-  with nobody playing, Nevin stands in the entrance and nothing starts.
-- Catching death before the game reloads a checkpoint.
-
-**First milestone:** a Survival entry on the main menu puts a fully upgraded
-Nevin into the L05_A3 boss arena, switches on one of its spawners and shows
-"Wave 1". About 2-3 hours. Waves, harder waves, the end screen and more arenas
-follow once that works.
+**Next:**
+- **Play it** and tune the waves: how many each, how fast they grow, the
+  rest between them.
+- **The other floors.** Each training arena's level script names its
+  spawners and moves Nevin to the fight's spot, and the floors' script entry
+  points are already hooked: each floor needs those two from its script, and
+  a level change between floors (`SA_Script_ChangeLevel` style, through the
+  loading menu as the first floor does).
+- **A wave and time counter on screen** for the whole run (now the wave shows
+  only as it starts), and the time on the end screen.
+- **The end screen** is the game's own death screen with "You reached wave
+  N" over it; it still says "Press A to continue" and leaves on its own after
+  six seconds.
+- **Small things:** the money counter still counts up; whether Survival shows
+  from the start or, like New Game+, only once the game is finished.
+- **Boss floors:** the Paavo Echo fights are scripted boss fights with
+  cutscenes; keeping their own script from starting the fight, or using it as
+  the floor's last wave, is still to work out. The engine can also create an
+  enemy of any type the area loads anywhere (`SA_Obj_CreateObject`), for more
+  spawn points than the arena has.
 
 ## Performance
 
