@@ -463,6 +463,12 @@ one does (with the Wine build, below).
 
 - **Runtime switches:** every `RECOMP_*` environment variable (rendering,
   audio, input, diagnostics) is listed in the toolkit's README.
+- **Where a frame's time goes:** `RECOMP_FRAME_STATS=1` logs every ten
+  seconds the frame times (average and percentiles), the game thread's CPU
+  time and what it waited on, and the GPU thread's CPU, idle and pacing time.
+  `RECOMP_TRACE=trace.json` also records a few seconds of both threads as a
+  timeline that opens in [ui.perfetto.dev](https://ui.perfetto.dev); the
+  toolkit's README has the details.
 - **Regenerating the C code:** `tools/regen_modules.sh` reruns the whole
   translation pipeline. Every setup and both installers run
   `tools/setup_game.py`, which holds it.

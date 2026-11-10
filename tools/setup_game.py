@@ -49,7 +49,7 @@ WINDOWS = os.name == "nt"
 # checkout is never changed, only checked: it must contain this commit (a
 # later one on the same branch is fine).
 TOOLKIT_URL = os.environ.get("TOOLKIT_URL", "https://github.com/WNBDEV/xboxrecomp.git")
-TOOLKIT_COMMIT = "83357acac82d6a82f2aeefd2888f670a4fd4bc2b"
+TOOLKIT_COMMIT = "70f8724d8b42366a3f066732f21b4d537b60f25a"
 
 # The release everything here was made against: Alter Echo, NTSC, version 1.
 # The function list, the fixes and the addresses in the notes are specific to
