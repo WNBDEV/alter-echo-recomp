@@ -21,6 +21,19 @@ add_compile_definitions(
     NOMINMAX
 )
 
+# Compiled for the processor of the PC that builds it, which is the player's:
+# the installers always compile there. In a heavy fight it took a third of
+# the frames that missed 60 fps away (fix 80 in DEVLOG.md). -ffp-contract=off
+# keeps a * b + c two roundings, as the game's x87 code rounds it, where a
+# fused multiply-add would round once and change results; -fno-math-errno
+# lets sqrt and friends inline (nothing reads errno). The toolkit, added
+# below, is built with the same flags. AE_NATIVE_CPU=OFF builds for any
+# x86-64, for a build that has to run on another PC.
+option(AE_NATIVE_CPU "Optimise for the processor of the PC that builds it" ON)
+if(AE_NATIVE_CPU AND CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-march=native -ffp-contract=off -fno-math-errno)
+endif()
+
 # ── xboxrecomp toolkit ──────────────────────────────────────────
 #
 # Option A: xboxrecomp as a subdirectory (simplest)
@@ -80,6 +93,9 @@ set(GAME_SOURCES
     src/game_args.c
     # Keyboard help for the game's own modes (WASD in time dilation).
     src/title_input.c
+    # Native versions of the game's costliest C library routines (_ftol2);
+    # also in tools/setup_game.py's MANUAL_WRAPS, so the translator skips them.
+    src/native_crt.c
     # Started without a launcher script (Windows double-click): settings, log.
     src/launch.c
     # Extras: gameplay the original doesn't have, each off unless turned on

@@ -49,7 +49,7 @@ WINDOWS = os.name == "nt"
 # checkout is never changed, only checked: it must contain this commit (a
 # later one on the same branch is fine).
 TOOLKIT_URL = os.environ.get("TOOLKIT_URL", "https://github.com/WNBDEV/xboxrecomp.git")
-TOOLKIT_COMMIT = "b39e21a179e10adcdf6b7f36ea8c00d4f4c33370"
+TOOLKIT_COMMIT = "83357acac82d6a82f2aeefd2888f670a4fd4bc2b"
 
 # The release everything here was made against: Alter Echo, NTSC, version 1.
 # The function list, the fixes and the addresses in the notes are specific to
@@ -236,9 +236,10 @@ def run_logged(cmd, cwd, log):
         fail("%s failed; see %s" % (" ".join(os.path.basename(c) for c in cmd[:3]), log))
 
 
-# The project files that wrap translated functions (sub_X calling sub_X_gen).
-MANUAL_WRAPS = ("module_loader.c", "game_args.c", "extras/new_game_plus.c",
-                "extras/survival.c")
+# The project files that wrap translated functions (sub_X calling sub_X_gen),
+# or replace them outright (native_crt.c).
+MANUAL_WRAPS = ("module_loader.c", "game_args.c", "native_crt.c",
+                "extras/new_game_plus.c", "extras/survival.c")
 
 
 def translate(T, py):

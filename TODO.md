@@ -146,20 +146,38 @@ way out (unload the area) to the main menu. How the pieces work is in
 
 ### Frame drops in the heaviest fights
 
-Fatal Flurry landing many hits, form swaps, grenades and explosions can drop to
-40-48 fps. The waiting in the port's own code is fixed (fix 67 in
-[DEVLOG.md](DEVLOG.md)). What's left is the game's own code taking longer than
-a frame on its one thread.
+Fatal Flurry landing many hits, form swaps, grenades and explosions still drop
+below 60 fps at moments. Survival mode is the repeatable test: the same fight
+on demand, driven by a scripted pad (fix 80 in [DEVLOG.md](DEVLOG.md) has the
+method and the numbers).
 
-**Lead:** the C library's float-to-integer routine (`_ftol2`, `sub_00151D3C`) is
-about 7.5% of that thread's time, because it runs as translated x87 code. A
-hand-written native version, added to the functions the translator skips (the
-`manual_wraps.c` list in `tools/setup_game.py`), should cut most of that. Other hot spots:
-`sub_00075480`, and on the graphics side `fetch_attr`,
-`gpu_draw_batch_program` and `hash_lanes`.
+**What a slow frame is (measured 10 Nov 2026):** about once a frame the game
+locks a buffer the GPU may still be reading (Xbox D3D's `BlockOnResource`,
+`sub_0016CD90`), and D3D then waits until the GPU has carried out every
+command sent so far. So the game's thread and the port's GPU thread (the
+executor that turns the commands into Direct3D 11) take turns instead of
+working at once: a slow frame is about 17 ms of the game's code plus about 10
+ms of the executor's. The real graphics card is mostly idle (about a quarter
+busy on a GTX 960). Fix 80 made the executor about 20% cheaper per command
+and built everything for the player's own CPU; heavy fights now miss 60 fps
+about half as often, but not never.
 
-**Needed:** a save made right before a big fight, so the drop can be repeated
-and measured.
+**Still open, biggest first:**
+- **The game's own code:** its x87 floating point runs on an emulated register
+  stack in memory, rounding every result to single precision through a
+  function, in nearly every function the game has. Keeping the x87 stack in
+  local variables inside each translated function (a translator change) is
+  the big lever left. The C library's float-to-integer routine is already
+  native (`src/native_crt.c`).
+- **Widescreen's HUD test:** every draw of 32 vertices or fewer (each particle
+  is one) runs through the CPU vertex shader interpreter to see whether it is
+  a HUD piece, about 8% of the executor in a fight. A cheaper test, or caching
+  it, needs checking against the HUD.
+- **Per-draw uploads:** two small constant buffers are written for every draw
+  whether they changed or not, and the vertex constants (3 KB) whenever any of
+  them changed.
+- **The executor's draw path** (`gpu_draw_batch_program`): vertex fetch and
+  index work are still its largest own cost.
 
 ### Elevator dip in L06_A8B
 

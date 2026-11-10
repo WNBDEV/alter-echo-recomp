@@ -411,11 +411,13 @@ files the game opened.
 
 ## Known limits
 
-- **Frame drops in the heaviest moments.** On an i7-4790K, sword combos landing
-  many hits (Fatal Flurry), form swaps and big explosions can drop to 40-48
-  fps, and a few areas dip to about 50 at moments (L07_A2a, L06_A9, the
-  ending). The cost is in the game's own code on one CPU thread, so a faster
-  CPU helps.
+- **Frame drops in the heaviest moments.** Sword combos landing many hits
+  (Fatal Flurry), form swaps and big explosions can still drop below 60 fps,
+  and a few areas dip to about 50 at moments (L07_A2a, L06_A9, the ending).
+  In those moments the game's own code and the port's graphics thread wait
+  for each other: about once a frame the game waits until every drawing
+  command it has sent has been carried out. Both run on the CPU, so a faster
+  CPU helps. Since 1.2.0 a big fight misses 60 fps about half as often.
 - **60 fps is the cap,** as on the console; the game is built around it.
 - **Windows support is experimental:** it has not been run on a real Windows
   PC yet.
