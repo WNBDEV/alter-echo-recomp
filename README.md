@@ -477,6 +477,9 @@ one does (with the Wine build, below).
   do; [DEVLOG.md](DEVLOG.md) covers them.
 - **Development log:** [DEVLOG.md](DEVLOG.md) is the full history of the port:
   how each problem was found and fixed, with every fix numbered.
+- **After-action report:** [AFTER-ACTION-REPORT.md](AFTER-ACTION-REPORT.md)
+  draws the lessons out of it: what went right and wrong, where the time
+  goes, and dos and don'ts for anyone recompiling a game the same way.
 
 ## How it works
 
